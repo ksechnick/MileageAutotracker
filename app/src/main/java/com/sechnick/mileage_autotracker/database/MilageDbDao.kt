@@ -61,4 +61,13 @@ interface MileageDatabaseDao {
      */
     @Query("SELECT * FROM recorded_trips ORDER BY start_time_milli DESC LIMIT 1")
     fun getCurrentTrip(): RecordedTrip?
+
+    /**
+     * Selects and returns the specified night.
+     */
+    @Query("SELECT * from recorded_trips WHERE tripId = :key")
+    fun getTrip(key: Long): RecordedTrip
+
+    @Query("SELECT * from recorded_trips WHERE tripId = :key")
+    fun getTripWithId(key: Long): LiveData<RecordedTrip>
 }

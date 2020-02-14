@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package com.sechnick.mileage_autotracker.sleepdetail
+package com.sechnick.mileage_autotracker.tripdetail
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.sechnick.mileage_autotracker.database.SleepNight
-import com.sechnick.mileage_autotracker.database.SleepDatabaseDao
+import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
+import com.sechnick.mileage_autotracker.database.RecordedTrip
 import kotlinx.coroutines.Job
 
 /**
  * ViewModel for SleepQualityFragment.
  *
- * @param sleepNightKey The key of the current night we are working on.
+ * @param tripNightKey The key of the current night we are working on.
  */
-class SleepDetailViewModel(
-        private val sleepNightKey: Long = 0L,
-        dataSource: SleepDatabaseDao) : ViewModel() {
+class TripDetailViewModel(
+        private val tripNightKey: Long = 0L,
+        dataSource: MileageDatabaseDao) : ViewModel() {
 
     /**
      * Hold a reference to SleepDatabase via its SleepDatabaseDao.
@@ -44,12 +44,12 @@ class SleepDetailViewModel(
      */
     private val viewModelJob = Job()
 
-    private val night: LiveData<SleepNight>
+    private val trip: LiveData<RecordedTrip>
 
-    fun getNight() = night
+    fun getTrip() = trip
 
     init {
-        night=database.getNightWithId(sleepNightKey)
+        trip=database.getTripWithId(tripNightKey)
     }
 
     /**

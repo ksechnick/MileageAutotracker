@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.sechnick.mileage_autotracker.sleeptracker
+package com.sechnick.mileage_autotracker.triptracker
 
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
@@ -25,7 +25,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.sechnick.mileage_autotracker.R
 import com.sechnick.mileage_autotracker.database.RecordedTrip
-import com.sechnick.mileage_autotracker.databinding.ListItemSleepNightLinearBinding
+import com.sechnick.mileage_autotracker.databinding.ListItemRecordedTripLinearBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,7 +43,7 @@ class RecordedTripAdapter(val clickListener: RecordedTripListener):
         adapterScope.launch {
             val items = when (list) {
                 null -> listOf(DataItem.Header)
-                else -> listOf(DataItem.Header) + list.map { DataItem.SleepNightItem(it) }
+                else -> listOf(DataItem.Header) + list.map { DataItem.RecordedTripItem(it) }
             }
             withContext(Dispatchers.Main) {
                 submitList(items)
@@ -54,7 +54,7 @@ class RecordedTripAdapter(val clickListener: RecordedTripListener):
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
             is ViewHolder -> {
-                val tripItem = getItem(position) as DataItem.SleepNightItem
+                val tripItem = getItem(position) as DataItem.RecordedTripItem
                 holder.bind(tripItem.trip, clickListener)
             }
         }
@@ -71,7 +71,7 @@ class RecordedTripAdapter(val clickListener: RecordedTripListener):
     override fun getItemViewType(position: Int): Int {
         return when (getItem(position)) {
             is DataItem.Header -> ITEM_VIEW_TYPE_HEADER
-            is DataItem.SleepNightItem -> ITEM_VIEW_TYPE_ITEM
+            is DataItem.RecordedTripItem -> ITEM_VIEW_TYPE_ITEM
         }
     }
 
@@ -86,7 +86,7 @@ class RecordedTripAdapter(val clickListener: RecordedTripListener):
     }
 
 
-    class ViewHolder private constructor(val binding: ListItemSleepNightLinearBinding) : RecyclerView.ViewHolder(binding.root){
+    class ViewHolder private constructor(val binding: ListItemRecordedTripLinearBinding) : RecyclerView.ViewHolder(binding.root){
 
         fun bind(item: RecordedTrip, clickListener: RecordedTripListener) {
             binding.trip = item
@@ -97,7 +97,7 @@ class RecordedTripAdapter(val clickListener: RecordedTripListener):
         companion object {
             fun from(parent: ViewGroup): ViewHolder {
                 val layoutInflater = LayoutInflater.from(parent.context)
-                val binding = ListItemSleepNightLinearBinding.inflate(layoutInflater, parent, false)
+                val binding = ListItemRecordedTripLinearBinding.inflate(layoutInflater, parent, false)
                 return ViewHolder(binding)
             }
         }
@@ -115,13 +115,13 @@ class RecordedTripDiffCallback : DiffUtil.ItemCallback<DataItem>() {
 }
 
 
-class RecordedTripListener(val clickListener: (sleepId: Long) -> Unit) {
+class RecordedTripListener(val clickListener: (tripId: Long) -> Unit) {
     fun onClick(trip: RecordedTrip) = clickListener(trip.tripId)
 }
 
 
 sealed class DataItem {
-    data class SleepNightItem(val trip: RecordedTrip): DataItem() {
+    data class RecordedTripItem(val trip: RecordedTrip): DataItem() {
         override val id = trip.tripId
     }
 

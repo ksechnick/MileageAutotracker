@@ -25,15 +25,15 @@
     <data>
 
         <variable
-            name="sleepTrackerViewModel"
-            type="com.sechnick.mileage_autotracker.sleeptracker.SleepTrackerViewModel" />
+            name="tripTrackerViewModel"
+            type="com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel" />
     </data>
 
     <!-- Start of the visible fragment layout using ConstraintLayout -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".sleeptracker.SleepTrackerFragment">
+        tools:context=".triptracker.TripTrackerFragment">
 
         <!-- This lesson we will switch to RecyclerView to properly
          display the sleep data-->
@@ -57,8 +57,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/margin"
-            android:enabled="@{sleepTrackerViewModel.startButtonVisible}"
-            android:onClick="@{() -> sleepTrackerViewModel.onStart()}"
+            android:enabled="@{tripTrackerViewModel.startButtonVisible}"
+            android:onClick="@{() -> tripTrackerViewModel.onStart()}"
             android:text="@string/start"
             app:layout_constraintBaseline_toBaselineOf="@id/stop_button"
             app:layout_constraintEnd_toStartOf="@+id/stop_button"
@@ -72,8 +72,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin"
             android:layout_marginEnd="@dimen/margin"
-            android:enabled="@{sleepTrackerViewModel.stopButtonVisible}"
-            android:onClick="@{() -> sleepTrackerViewModel.onStop()}"
+            android:enabled="@{tripTrackerViewModel.stopButtonVisible}"
+            android:onClick="@{() -> tripTrackerViewModel.onStop()}"
             android:text="@string/stop"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/start_button"
@@ -87,8 +87,8 @@
             android:layout_marginStart="@dimen/margin"
             android:layout_marginEnd="@dimen/margin"
             android:layout_marginBottom="@dimen/margin"
-            android:enabled="@{sleepTrackerViewModel.clearButtonVisible}"
-            android:onClick="@{() -> sleepTrackerViewModel.onClear()}"
+            android:enabled="@{tripTrackerViewModel.clearButtonVisible}"
+            android:onClick="@{() -> tripTrackerViewModel.onClear()}"
             android:text="@string/clear"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

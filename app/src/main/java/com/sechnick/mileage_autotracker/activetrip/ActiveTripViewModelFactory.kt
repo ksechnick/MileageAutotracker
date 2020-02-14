@@ -1,4 +1,4 @@
-package com.sechnick.mileage_autotracker.sleepdetail
+package com.sechnick.mileage_autotracker.activetrip
 
 /*
  * Copyright 2019, The Android Open Source Project
@@ -18,20 +18,20 @@ package com.sechnick.mileage_autotracker.sleepdetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.sechnick.mileage_autotracker.database.SleepDatabaseDao
+import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
 
 /**
  * This is pretty much boiler plate code for a ViewModel Factory.
  *
  * Provides the key for the night and the SleepDatabaseDao to the ViewModel.
  */
-class SleepDetailViewModelFactory(
-        private val sleepNightKey: Long,
-        private val dataSource: SleepDatabaseDao) : ViewModelProvider.Factory {
+class ActiveTripViewModelFactory(
+        private val recordedTripKey: Long,
+        private val dataSource: MileageDatabaseDao) : ViewModelProvider.Factory {
     @Suppress("unchecked_cast")
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SleepDetailViewModel::class.java)) {
-            return SleepDetailViewModel(sleepNightKey, dataSource) as T
+        if (modelClass.isAssignableFrom(ActiveTripViewModel::class.java)) {
+            return ActiveTripViewModel(recordedTripKey, dataSource) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.sechnick.mileage_autotracker.sleeptracker
+package com.sechnick.mileage_autotracker.triptracker
 
 import android.app.Application
 import androidx.lifecycle.LiveData
@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for SleepTrackerFragment.
  */
-class SleepTrackerViewModel(
+class TripTrackerViewModel(
         dataSource: MileageDatabaseDao,
         application: Application) : ViewModel() {
 
@@ -60,7 +60,7 @@ class SleepTrackerViewModel(
      */
     private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
 
-    private var thisTrip = MutableLiveData<RecordedTrip?>()
+    private var activeTrip = MutableLiveData<RecordedTrip?>()
 
     val trips = database.getAllTrips()
 
@@ -74,14 +74,14 @@ class SleepTrackerViewModel(
     /**
      * If tonight has not been set, then the START button should be visible.
      */
-    val startButtonVisible = Transformations.map(thisTrip) {
+    val startButtonVisible = Transformations.map(activeTrip) {
         null == it
     }
 
     /**
      * If tonight has been set, then the STOP button should be visible.
      */
-    val stopButtonVisible = Transformations.map(thisTrip) {
+    val stopButtonVisible = Transformations.map(activeTrip) {
         null != it
     }
 
@@ -159,7 +159,7 @@ class SleepTrackerViewModel(
 
     private fun initializeTonight() {
         uiScope.launch {
-            thisTrip.value = getCurrentTripFromDatabase()
+            activeTrip.value = getCurrentTripFromDatabase()
         }
     }
 
@@ -172,11 +172,11 @@ class SleepTrackerViewModel(
      */
     private suspend fun getCurrentTripFromDatabase(): RecordedTrip? {
         return withContext(Dispatchers.IO) {
-            var night = database.getCurrentTrip()
-            if (night?.endTimeMilli != night?.startTimeMilli) {
-                night = null
+            var thistrip = database.getCurrentTrip()
+            if (thistrip?.endTimeMilli != thistrip?.startTimeMilli) {
+                thistrip = null
             }
-            night
+            thistrip
         }
     }
 
@@ -209,7 +209,7 @@ class SleepTrackerViewModel(
 
             startTrip(trip)
 
-            thisTrip.value = getCurrentTripFromDatabase()
+            activeTrip.value = getCurrentTripFromDatabase()
         }
     }
 
@@ -221,7 +221,7 @@ class SleepTrackerViewModel(
             // In Kotlin, the return@label syntax is used for specifying which function among
             // several nested ones this statement returns from.
             // In this case, we are specifying to return from launch().
-            val oldTrip = thisTrip.value ?: return@launch
+            val oldTrip = activeTrip.value ?: return@launch
 
             // Update the night in the database to add the end time.
             oldTrip.endTimeMilli = System.currentTimeMillis()
@@ -242,7 +242,7 @@ class SleepTrackerViewModel(
             clearTrips()
 
             // And clear tonight since it's no longer in the database
-            thisTrip.value = null
+            activeTrip.value = null
 
             // Show a snackbar message, because it's friendly.
             _showSnackbarEvent.value = true

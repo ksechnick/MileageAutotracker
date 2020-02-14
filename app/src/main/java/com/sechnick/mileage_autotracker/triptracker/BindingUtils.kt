@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.sechnick.mileage_autotracker.sleeptracker
+package com.sechnick.mileage_autotracker.triptracker
 
 import android.widget.ImageView
 import android.widget.TextView
@@ -23,7 +23,6 @@ import com.sechnick.mileage_autotracker.R
 import com.sechnick.mileage_autotracker.convertDurationToFormatted
 import com.sechnick.mileage_autotracker.convertNumericQualityToString
 import com.sechnick.mileage_autotracker.database.RecordedTrip
-import com.sechnick.mileage_autotracker.database.SleepNight
 
 
 @BindingAdapter("tripDurationFormatted")
@@ -33,25 +32,18 @@ fun TextView.setTripDurationFormatted(item: RecordedTrip?) {
     }
 }
 
-@BindingAdapter("sleepDurationFormatted")
-fun TextView.setSleepDurationFormatted(item: SleepNight?) {
+@BindingAdapter("tripQualityString")
+fun TextView.setTripQualityString(item: RecordedTrip?) {
     item?.let {
-        text = convertDurationToFormatted(item.startTimeMilli, item.endTimeMilli, context.resources)
-    }
-}
-
-@BindingAdapter("sleepQualityString")
-fun TextView.setSleepQualityString(item: SleepNight?) {
-    item?.let {
-        text = convertNumericQualityToString(item.sleepQuality, context.resources)
+        text = convertNumericQualityToString(item.vehicleId, context.resources)
     }
 }
 
 
-@BindingAdapter("sleepImage")
-fun ImageView.setSleepImage(item: SleepNight?) {
+@BindingAdapter("tripImage")
+fun ImageView.setTripImage(item: RecordedTrip?) {
     item?.let {
-        setImageResource(when (item.sleepQuality) {
+        setImageResource(when (item.vehicleId) {
             0 -> R.drawable.ic_sleep_0
             1 -> R.drawable.ic_sleep_1
             2 -> R.drawable.ic_sleep_2

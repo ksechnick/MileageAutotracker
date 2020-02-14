@@ -24,13 +24,14 @@
             type="com.sechnick.mileage_autotracker.database.RecordedTrip"/>
         <variable
             name="clickListener"
-            type="com.sechnick.mileage_autotracker.sleeptracker.RecordedTripListener" />
+            type="com.sechnick.mileage_autotracker.triptracker.RecordedTripListener" />
     </data>
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:onClick="@{() -> clickListener.onClick(trip)}">
 
         <TextView
             android:id="@+id/trip_length"

@@ -25,9 +25,9 @@
 
     <fragment
         android:id="@+id/sleep_tracker_fragment"
-        android:name="com.sechnick.mileage_autotracker.sleeptracker.SleepTrackerFragment"
+        android:name="com.sechnick.mileage_autotracker.triptracker.TripTrackerFragment"
         android:label="@string/sleep_tracker_fragment"
-        tools:layout="@layout/fragment_sleep_tracker">
+        tools:layout="@layout/fragment_trip_tracker">
         <action
             android:id="@+id/action_sleepTrackerFragment_to_sleepQualityFragment"
             app:destination="@id/sleep_quality_fragment"
@@ -42,9 +42,9 @@
 
     <fragment
         android:id="@+id/sleep_quality_fragment"
-        android:name="com.sechnick.mileage_autotracker.sleepquality.SleepQualityFragment"
+        android:name="com.sechnick.mileage_autotracker.activetrip.ActiveTripFragment"
         android:label="@string/sleep_quality_fragment"
-        tools:layout="@layout/fragment_sleep_quality">
+        tools:layout="@layout/fragment_active_trip">
         <argument
             android:name="recordedTripKey"
             app:argType="long" />
@@ -58,9 +58,9 @@
 
     <fragment
         android:id="@+id/sleep_detail_fragment"
-        android:name="com.sechnick.mileage_autotracker.sleepdetail.SleepDetailFragment"
+        android:name="com.sechnick.mileage_autotracker.tripdetail.TripDetailFragment"
         android:label="fragment_sleep_detail"
-        tools:layout="@layout/fragment_sleep_detail" >
+        tools:layout="@layout/fragment_trip_detail" >
         <argument
             android:name="recordedTripKey"
             app:argType="long" />

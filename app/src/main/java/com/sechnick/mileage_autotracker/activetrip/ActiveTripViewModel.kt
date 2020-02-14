@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.sechnick.mileage_autotracker.sleepquality
+package com.sechnick.mileage_autotracker.activetrip
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.sechnick.mileage_autotracker.database.SleepDatabaseDao
+import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -29,11 +29,11 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for SleepQualityFragment.
  *
- * @param sleepNightKey The key of the current night we are working on.
+ * @param recordedTripKey The key of the current night we are working on.
  */
-class SleepQualityViewModel(
-        private val sleepNightKey: Long = 0L,
-        dataSource: SleepDatabaseDao) : ViewModel() {
+class ActiveTripViewModel(
+        private val recordedTripKey: Long = 0L,
+        dataSource: MileageDatabaseDao) : ViewModel() {
 
     /**
      * Hold a reference to SleepDatabase via its SleepDatabaseDao.
@@ -100,9 +100,9 @@ class SleepQualityViewModel(
             // IO is a thread pool for running operations that access the disk, such as
             // our Room database.
             withContext(Dispatchers.IO) {
-                val tonight = database.get(sleepNightKey)
-                tonight.sleepQuality = quality
-                database.update(tonight)
+                val thisTrip = database.getTrip(recordedTripKey)
+                thisTrip.vehicleId = quality
+                database.updateTrip(thisTrip)
             }
 
             // Setting this state variable to true will alert the observer and trigger navigation.
