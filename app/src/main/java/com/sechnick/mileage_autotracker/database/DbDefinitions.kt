@@ -28,10 +28,10 @@ data class RecordedTrip(
 
         //allows multisegment trips to be linked together
         @ColumnInfo(name = "previous_trip")
-        val prevTripId: Long = 0L,
+        var prevTripId: Long = 0L,
 
         @ColumnInfo(name = "next_trip")
-        val nextTripId: Long = 0L,
+        var nextTripId: Long = 0L,
 
         @ColumnInfo(name = "start_time_milli")
         val startTimeMilli: Long = System.currentTimeMillis(),
@@ -85,23 +85,23 @@ data class RecordedTrip(
 @Entity(tableName = "recorded_points")
 data class RecordedPoint(
     @PrimaryKey(autoGenerate = true)
-    var pointId: Long = 0L,
+    val pointId: Long = 0L,
 
     //links to trip
     @ColumnInfo(name = "trip_id")
-    val tripId: Long = 0L,
+    var tripId: Long = 0L,
 
     //links to previous point
     @ColumnInfo(name = "previous_point")
-    val prevPoint: Long = 0L,
+    var prevPoint: Long = 0L,
 
     //links to next point
     @ColumnInfo(name = "next_point")
-    val nextPoint: Long = 0L,
+    var nextPoint: Long = 0L,
 
     //degrees
     @ColumnInfo(name = "latitude")
-    val latitude: Double = 1000.0,
+    var latitude: Double = 1000.0,
 
     @ColumnInfo(name = "longitude")
     var longitude: Double = 1000.0,

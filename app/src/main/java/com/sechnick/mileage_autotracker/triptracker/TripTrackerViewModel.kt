@@ -16,12 +16,25 @@
 
 package com.sechnick.mileage_autotracker.triptracker
 
+import android.Manifest
 import android.app.Application
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
+import android.os.Build
+import android.os.Looper
+import android.util.Log
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import com.google.android.gms.location.*
 import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
+import com.sechnick.mileage_autotracker.database.RecordedPoint
 import com.sechnick.mileage_autotracker.database.RecordedTrip
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +47,7 @@ import kotlinx.coroutines.withContext
  */
 class TripTrackerViewModel(
         dataSource: MileageDatabaseDao,
-        application: Application) : ViewModel() {
+        val thisApplication: Application) : ViewModel() {
 
     /**
      * Hold a reference to SleepDatabase via SleepDatabaseDao.
@@ -64,12 +77,6 @@ class TripTrackerViewModel(
 
     val trips = database.getAllTrips()
 
-    /**
-     * Converted nights to Spanned for displaying.
-     */
-//    val tripsString = Transformations.map(trips) { trips ->
-//        formatNights(trips, application.resources)
-//    }
 
     /**
      * If tonight has not been set, then the START button should be visible.
@@ -142,7 +149,7 @@ class TripTrackerViewModel(
      * Navigation for the SleepDetails fragment.
      */
     private val _navigateToSleepDetail = MutableLiveData<Long>()
-    val navigateToSleepDetail
+    val navigateToSleepDetail : LiveData<Long>
         get() = _navigateToSleepDetail
 
     fun onSleepNightClicked(id: Long) {
@@ -153,8 +160,62 @@ class TripTrackerViewModel(
         _navigateToSleepDetail.value = null
     }
 
+    /**
+     * variables for location services
+     */
+    lateinit var currentLocation : Location
+    private var fusedLocationProviderClient: FusedLocationProviderClient? = null
+    private val INTERVAL: Long = 2000
+    private val FASTEST_INTERVAL: Long = 1000
+    internal var locationRequest: LocationRequest
+    val REQUEST_PERMISSION_LOCATION = 10
+
+
+    private val _locationSnackbarText = MutableLiveData<String>()
+    val locationSnackbarText : LiveData<String>
+        get() = _locationSnackbarText
+
+    private val _requestLocationPermission = MutableLiveData<Boolean>()
+    val requestLocationPermission : LiveData<Boolean>
+        get() = _requestLocationPermission
+
+    private val _locationPermissionGranted = MutableLiveData<Boolean>()
+    val locationPermissionGranted : LiveData<Boolean>
+        get() = _locationPermissionGranted
+
+    private val _permissionAck = MutableLiveData<Boolean>()
+    val permissionAck : LiveData<Boolean>
+        get() = _permissionAck
+
+
+
+    fun locationPermissionGranted() {
+        _locationPermissionGranted.value = true
+        _requestLocationPermission.value = false
+    }
+
+    fun locationPermissionNotGranted() {
+        _locationPermissionGranted.value = false
+        _requestLocationPermission.value = false
+    }
+
+
+
+    private var currentPoint = RecordedPoint()
+    private lateinit var previousPoint: RecordedPoint
+
     init {
         initializeTonight()
+        locationRequest = LocationRequest()
+
+//        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+//        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+//            buildAlertMessageNoGps()
+//        }
+        _locationPermissionGranted.value = false
+        _requestLocationPermission.value = false
+        _locationSnackbarText.value = "nothing yet"
+
     }
 
     private fun initializeTonight() {
@@ -198,6 +259,31 @@ class TripTrackerViewModel(
         }
     }
 
+    private suspend fun getCurrentPointFromDatabase(): RecordedPoint {
+        return withContext(Dispatchers.IO) {
+            var thisPoint = database.getCurrentPoint()
+            if (thisPoint?.elapsedTime == 0L) {
+                thisPoint = null
+                //TODO("PROBLEM if emptyDB")
+            }
+            thisPoint!!
+        }
+    }
+
+    private suspend fun recordPoint(point: RecordedPoint) {
+        withContext(Dispatchers.IO) {
+            database.recordPoint(point)
+        }
+    }
+
+    private suspend fun updatePoint(point: RecordedPoint) {
+        withContext(Dispatchers.IO) {
+            database.updatePoint(point)
+        }
+    }
+
+
+
     /**
      * Executes when the START button is clicked.
      */
@@ -210,6 +296,20 @@ class TripTrackerViewModel(
             startTrip(trip)
 
             activeTrip.value = getCurrentTripFromDatabase()
+
+           // _requestLocationPermission.value = true
+
+            //Log.d("permissions", "permission request = "+ _requestLocationPermission.value.toString())
+
+            Log.d("permissions", "permission result = "+ _locationPermissionGranted.value.toString())
+            //if (_locationPermissionGranted.value == true) {
+            if (true) {
+                startLocationUpdates()
+                _locationSnackbarText.value = "victory"
+            } else {
+                _locationSnackbarText.value = "never set"
+            }
+
         }
     }
 
@@ -225,6 +325,10 @@ class TripTrackerViewModel(
 
             // Update the night in the database to add the end time.
             oldTrip.endTimeMilli = System.currentTimeMillis()
+
+            if (_locationPermissionGranted.value == true) {
+                stoplocationUpdates()
+            }
 
             updateTrip(oldTrip)
 
@@ -259,4 +363,79 @@ class TripTrackerViewModel(
         super.onCleared()
         viewModelJob.cancel()
     }
+
+    /**
+     * Location services code
+     */
+
+    protected fun startLocationUpdates() {
+
+        // Create the location request to start receiving updates
+
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.setInterval(INTERVAL)
+        locationRequest.setFastestInterval(FASTEST_INTERVAL)
+
+        // Create LocationSettingsRequest object using location request
+        val builder = LocationSettingsRequest.Builder()
+        builder.addLocationRequest(locationRequest)
+        val locationSettingsRequest = builder.build()
+
+        val settingsClient = LocationServices.getSettingsClient(thisApplication)
+        settingsClient.checkLocationSettings(locationSettingsRequest)
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(thisApplication)
+        // new Google API SDK v11 uses getFusedLocationProviderClient(this)
+        if (ActivityCompat.checkSelfPermission(thisApplication, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(thisApplication, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+
+            return
+        }
+        fusedLocationProviderClient!!.requestLocationUpdates(locationRequest, locationCallback,
+                Looper.myLooper())
+    }
+
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            // do work here
+            locationResult.lastLocation
+            onLocationChanged(locationResult.lastLocation)
+        }
+    }
+    fun onLocationChanged(location: Location) {
+        uiScope.launch {
+
+            val newPoint = RecordedPoint()
+
+            // New location has now been determined
+            previousPoint = currentPoint
+            currentLocation = location
+
+            newPoint.tripId = activeTrip.value!!.tripId
+            newPoint.prevPoint = previousPoint.pointId
+            newPoint.latitude = currentLocation.latitude
+            newPoint.longitude =  currentLocation.longitude
+            newPoint.horizontalAccuracy = currentLocation.accuracy
+            newPoint.bearing = currentLocation.bearing
+            newPoint.bearingAccuracy = currentLocation.bearing
+            newPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
+            newPoint.speed = currentLocation.speed
+            newPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
+
+            withContext(Dispatchers.IO) {
+                recordPoint(newPoint)
+                currentPoint = getCurrentPointFromDatabase()
+            }
+
+            val logString = "ID:"+currentPoint.pointId.toString()+", Lat:"+newPoint.latitude.toString()+", Long:"+newPoint.latitude.toString()
+            Log.d("recordedPoint", logString)
+
+        }
+    }
+
+    private fun stoplocationUpdates() {
+        fusedLocationProviderClient!!.removeLocationUpdates(locationCallback)
+    }
+
+
 }

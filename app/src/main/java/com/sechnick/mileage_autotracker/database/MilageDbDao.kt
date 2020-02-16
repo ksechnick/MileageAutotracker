@@ -35,6 +35,9 @@ interface MileageDatabaseDao {
     @Update
     fun updateTrip(trip: RecordedTrip)
 
+    @Update
+    fun updatePoint(trip: RecordedPoint)
+
 //    @Transaction
 //    @Query("SELECT * from recorded_trips WHERE tripId = :key")
 //    fun getTripWithPoints(key: Long): tripWithPoints
@@ -57,10 +60,16 @@ interface MileageDatabaseDao {
     fun getAllTrips(): LiveData<List<RecordedTrip>>
 
     /**
-     * Selects and returns the latest night.
+     * Selects and returns the latest trip.
      */
     @Query("SELECT * FROM recorded_trips ORDER BY start_time_milli DESC LIMIT 1")
     fun getCurrentTrip(): RecordedTrip?
+
+    /**
+     * Selects and returns the latest point.
+     */
+    @Query("SELECT * FROM recorded_points ORDER BY elapsed_time DESC LIMIT 1")
+    fun getCurrentPoint(): RecordedPoint?
 
     /**
      * Selects and returns the specified night.

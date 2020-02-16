@@ -16,15 +16,49 @@
 
 package com.sechnick.mileage_autotracker
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.lifecycle.ViewModelProviders
+import com.sechnick.mileage_autotracker.database.MileageDatabase
+import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel
+import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModelFactory
 
 
 class MainActivity : AppCompatActivity() {
+
+    lateinit var tripTrackerViewModel : TripTrackerViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
+
+        val dataSource = MileageDatabase.getInstance(application).mileageDatabaseDao
+        val viewModelFactory = TripTrackerViewModelFactory(dataSource, application)
+        tripTrackerViewModel =
+                ViewModelProviders.of(
+                        this, viewModelFactory).get(TripTrackerViewModel::class.java)
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+
+        Log.d("permissions", "requesting permissions at Activity")
+
+        if (requestCode == tripTrackerViewModel.REQUEST_PERMISSION_LOCATION) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                tripTrackerViewModel.locationPermissionGranted()
+            } else {
+                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+                tripTrackerViewModel.locationPermissionNotGranted()
+            }
+        }
+    }
+
 }

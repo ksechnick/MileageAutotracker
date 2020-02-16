@@ -24,7 +24,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.sechnick.mileage_autotracker"
-        minSdkVersion 19
+        minSdkVersion 26
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -76,5 +76,8 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
+
+    // Navigation
+    implementation 'com.google.android.gms:play-services-location:17.0.0'
 }
 
