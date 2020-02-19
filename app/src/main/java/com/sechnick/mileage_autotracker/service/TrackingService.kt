@@ -160,7 +160,7 @@ class TrackingService() : Service() {
 
 
 
-        val logString = "ID:"+newPoint.pointId.toString()+", Lat:"+newPoint.latitude.toString()+", Long:"+newPoint.latitude.toString()
+        val logString = "ID:"+newPoint.pointId.toString()+", Lat:"+newPoint.latitude.toString()+", Long:"+newPoint.longitude.toString()
         Log.d("recordedPoint", logString)
 
         }
