@@ -17,16 +17,18 @@
 package com.sechnick.mileage_autotracker.triptracker
 
 import android.Manifest
-import android.content.Context
+import android.content.ComponentName
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -35,8 +37,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sechnick.mileage_autotracker.R
 import com.google.android.material.snackbar.Snackbar
+import com.sechnick.mileage_autotracker.MainActivity
+import com.sechnick.mileage_autotracker.service.TrackingService
 import com.sechnick.mileage_autotracker.database.MileageDatabase
 import com.sechnick.mileage_autotracker.databinding.FragmentTripTrackerBinding
+import kotlinx.android.synthetic.main.fragment_trip_tracker.*
 
 /**
  * A fragment with buttons to record start and end times for sleep, which are saved in
@@ -142,7 +147,7 @@ class TripTrackerFragment : Fragment() {
         })
 
         // Add an Observer on the state variable for Navigating when and item is clicked.
-        tripTrackerViewModel.requestLocationPermission.observe(this, Observer {
+        TripTrackerViewModel.requestLocationPermission.observe(this, Observer {
             if (it == true) { // Observed state is true.
 
                 checkPermissionForLocation()
@@ -181,12 +186,12 @@ class TripTrackerFragment : Fragment() {
 
         Log.d("permissions", "requesting permissions at fragments")
 
-        if (requestCode == tripTrackerViewModel.REQUEST_PERMISSION_LOCATION) {
+        if (requestCode == TripTrackerViewModel.REQUEST_PERMISSION_LOCATION) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                tripTrackerViewModel.locationPermissionGranted()
+                TripTrackerViewModel.locationPermissionGranted()
             } else {
                 Toast.makeText(this.context, "Permission Denied", Toast.LENGTH_SHORT).show()
-                tripTrackerViewModel.locationPermissionNotGranted()
+                TripTrackerViewModel.locationPermissionNotGranted()
             }
         }
     }
@@ -200,19 +205,24 @@ class TripTrackerFragment : Fragment() {
             if (context!!.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
                     PackageManager.PERMISSION_GRANTED) {
                 //TODO("could context ever be null?")
+                TripTrackerViewModel.locationPermissionGranted()
                 Log.d("permissions", "location permission check passed")
                 true
             } else {
                 // Show the permission request
                 requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                        tripTrackerViewModel.REQUEST_PERMISSION_LOCATION)
+                        TripTrackerViewModel.REQUEST_PERMISSION_LOCATION)
+                TripTrackerViewModel.locationPermissionNotGranted()
                 Log.d("permissions", "location permission check failed")
                 false
             }
         } else {
+            TripTrackerViewModel.locationPermissionGranted()
             Log.d("permissions", "too old to request permissions")
             true
         }
     }
+
+
 
 }

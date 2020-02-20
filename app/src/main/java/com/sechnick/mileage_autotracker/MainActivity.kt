@@ -17,47 +17,91 @@
 package com.sechnick.mileage_autotracker
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProviders
 import com.sechnick.mileage_autotracker.database.MileageDatabase
+import com.sechnick.mileage_autotracker.service.TrackingService
 import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel
 import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModelFactory
 
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var tripTrackerViewModel : TripTrackerViewModel
+    //lateinit var tripTrackerViewModel : TripTrackerViewModel
+
+//    companion object {
+//
+//        lateinit var globalViewModel : TripTrackerViewModel
+//
+//        fun setTripTrackerViewModel(item: TripTrackerViewModel){
+//            globalViewModel = item
+//        }
+//        fun getTripTrackerViewModel(): TripTrackerViewModel{
+//            return globalViewModel
+//        }
+//
+//    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
 
-        val dataSource = MileageDatabase.getInstance(application).mileageDatabaseDao
-        val viewModelFactory = TripTrackerViewModelFactory(dataSource, application)
-        tripTrackerViewModel =
-                ViewModelProviders.of(
-                        this, viewModelFactory).get(TripTrackerViewModel::class.java)
+        Log.d("bind service", "sending intent")
+        Intent(this, TrackingService::class.java).also { intent ->
+            bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
 
         Log.d("permissions", "requesting permissions at Activity")
 
-        if (requestCode == tripTrackerViewModel.REQUEST_PERMISSION_LOCATION) {
+        if (requestCode == TripTrackerViewModel.REQUEST_PERMISSION_LOCATION) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                tripTrackerViewModel.locationPermissionGranted()
+                TripTrackerViewModel.locationPermissionGranted()
             } else {
                 Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
-                tripTrackerViewModel.locationPermissionNotGranted()
+                TripTrackerViewModel.locationPermissionNotGranted()
             }
+        }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("Activity Lifecycle", "destroying activity")
+        unbindService(connection)
+        TripTrackerViewModel.setBound(false)
+    }
+
+
+    /** Defines callbacks for service binding, passed to bindService()  */
+    private val connection = object : ServiceConnection {
+
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            Log.d("bind service", "connecting service")
+            val binder = service as TrackingService.LocalBinder
+            TripTrackerViewModel.myService = binder.getService()
+            TripTrackerViewModel.setBound(true)
+            Log.d("bind service", "myService ="+TripTrackerViewModel.myService.toString())
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            TripTrackerViewModel.setBound(false)
+            Log.d("bind service", "disconnecting service")
         }
     }
 

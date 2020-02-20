@@ -16,6 +16,8 @@
 
 package com.sechnick.mileage_autotracker.triptracker
 
+import android.util.Log
+import android.widget.Button
 import android.annotation.SuppressLint
 import android.widget.ImageView
 import android.widget.TextView
@@ -38,6 +40,7 @@ fun TextView.setTripQualityString(item: RecordedTrip?) {
     item?.let {
         text = convertNumericQualityToString(item.vehicleId, context.resources)
     }
+
 }
 
 
@@ -57,6 +60,13 @@ fun ImageView.setTripImage(item: RecordedTrip?) {
         })
     }
 }
+
+@BindingAdapter("customEnabled")
+fun Button.setEnabled(item: Boolean) {
+    Log.d("data binding", "button visibility =$item")
+    isEnabled = item
+}
+
 
 @BindingAdapter("tripBusinessPersonal")
 fun TextView.setTripBusinessorPersonal(item: RecordedTrip?) {

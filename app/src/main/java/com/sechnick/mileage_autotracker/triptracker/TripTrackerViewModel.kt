@@ -18,11 +18,14 @@ package com.sechnick.mileage_autotracker.triptracker
 
 import android.Manifest
 import android.app.Application
+import android.content.ComponentName
 import android.content.Context
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
+import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
@@ -36,6 +39,7 @@ import com.google.android.gms.location.*
 import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
 import com.sechnick.mileage_autotracker.database.RecordedPoint
 import com.sechnick.mileage_autotracker.database.RecordedTrip
+import com.sechnick.mileage_autotracker.service.TrackingService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,6 +52,47 @@ import kotlinx.coroutines.withContext
 class TripTrackerViewModel(
         dataSource: MileageDatabaseDao,
         val thisApplication: Application) : ViewModel() {
+
+    companion object {
+
+        var myService = TrackingService()
+
+        private val _bound = MutableLiveData<Boolean>()
+        val bound: LiveData<Boolean>
+            get() = _bound
+        fun setBound(value: Boolean){
+            _bound.value = value
+            Log.d("bind service", "bound =" +_bound.value)
+        }
+
+        private val _requestLocationPermission = MutableLiveData<Boolean>()
+        val requestLocationPermission : LiveData<Boolean>
+            get() = _requestLocationPermission
+
+        private val _locationPermissionGranted = MutableLiveData<Boolean>()
+        val locationPermissionGranted : LiveData<Boolean>
+            get() = _locationPermissionGranted
+
+        private val _permissionAck = MutableLiveData<Boolean>()
+        val permissionAck : LiveData<Boolean>
+            get() = _permissionAck
+
+        fun locationPermissionGranted() {
+            _locationPermissionGranted.value = true
+            _requestLocationPermission.value = false
+        }
+
+        fun locationPermissionNotGranted() {
+            _locationPermissionGranted.value = false
+            _requestLocationPermission.value = false
+        }
+
+        val REQUEST_PERMISSION_LOCATION = 10
+
+        var activeTrip = MutableLiveData<RecordedTrip?>()
+
+    }
+
 
     /**
      * Hold a reference to SleepDatabase via SleepDatabaseDao.
@@ -73,7 +118,7 @@ class TripTrackerViewModel(
      */
     private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
 
-    private var activeTrip = MutableLiveData<RecordedTrip?>()
+
 
     val trips = database.getAllTrips()
 
@@ -163,41 +208,36 @@ class TripTrackerViewModel(
     /**
      * variables for location services
      */
-    lateinit var currentLocation : Location
-    private var fusedLocationProviderClient: FusedLocationProviderClient? = null
-    private val INTERVAL: Long = 2000
-    private val FASTEST_INTERVAL: Long = 1000
-    internal var locationRequest: LocationRequest
-    val REQUEST_PERMISSION_LOCATION = 10
+
 
 
     private val _locationSnackbarText = MutableLiveData<String>()
     val locationSnackbarText : LiveData<String>
         get() = _locationSnackbarText
 
-    private val _requestLocationPermission = MutableLiveData<Boolean>()
-    val requestLocationPermission : LiveData<Boolean>
-        get() = _requestLocationPermission
+//    private val _requestLocationPermission = MutableLiveData<Boolean>()
+//    val requestLocationPermission : LiveData<Boolean>
+//        get() = _requestLocationPermission
+//
+//    private val _locationPermissionGranted = MutableLiveData<Boolean>()
+//    val locationPermissionGranted : LiveData<Boolean>
+//        get() = _locationPermissionGranted
+//
+//    private val _permissionAck = MutableLiveData<Boolean>()
+//    val permissionAck : LiveData<Boolean>
+//        get() = _permissionAck
 
-    private val _locationPermissionGranted = MutableLiveData<Boolean>()
-    val locationPermissionGranted : LiveData<Boolean>
-        get() = _locationPermissionGranted
-
-    private val _permissionAck = MutableLiveData<Boolean>()
-    val permissionAck : LiveData<Boolean>
-        get() = _permissionAck
 
 
-
-    fun locationPermissionGranted() {
-        _locationPermissionGranted.value = true
-        _requestLocationPermission.value = false
-    }
-
-    fun locationPermissionNotGranted() {
-        _locationPermissionGranted.value = false
-        _requestLocationPermission.value = false
-    }
+//    fun locationPermissionGranted() {
+//        _locationPermissionGranted.value = true
+//        _requestLocationPermission.value = false
+//    }
+//
+//    fun locationPermissionNotGranted() {
+//        _locationPermissionGranted.value = false
+//        _requestLocationPermission.value = false
+//    }
 
 
 
@@ -206,7 +246,6 @@ class TripTrackerViewModel(
 
     init {
         initializeTonight()
-        locationRequest = LocationRequest()
 
 //        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 //        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -215,6 +254,9 @@ class TripTrackerViewModel(
         _locationPermissionGranted.value = false
         _requestLocationPermission.value = false
         _locationSnackbarText.value = "nothing yet"
+        _bound.value = false
+        Log.d("bind service", "initialized bound =" +_bound.value)
+        Log.d("bind service", "initial myService ="+ myService.toString())
 
     }
 
@@ -299,16 +341,21 @@ class TripTrackerViewModel(
 
            // _requestLocationPermission.value = true
 
-            //Log.d("permissions", "permission request = "+ _requestLocationPermission.value.toString())
+            Log.d("permissions", "permission request = "+ _requestLocationPermission.value.toString())
 
             Log.d("permissions", "permission result = "+ _locationPermissionGranted.value.toString())
             //if (_locationPermissionGranted.value == true) {
             if (true) {
-                startLocationUpdates()
+               // myService.startLocationUpdates()
                 _locationSnackbarText.value = "victory"
             } else {
                 _locationSnackbarText.value = "never set"
             }
+
+            Log.d("TrackerFragmentCreate", "inside start listener")
+            Log.d("bind service", "myService =$myService")
+            TrackingService.startService(thisApplication,"I'm tracking now")
+            myService.startDBLogging(database)
 
         }
     }
@@ -327,11 +374,12 @@ class TripTrackerViewModel(
             oldTrip.endTimeMilli = System.currentTimeMillis()
 
             if (_locationPermissionGranted.value == true) {
-                stoplocationUpdates()
+                myService.stopLocationUpdates()
             }
 
             updateTrip(oldTrip)
-
+            Log.d("TrackerFragmentCreate", "inside stop listener")
+            TrackingService.stopService(thisApplication)
             // Set state to navigate to the SleepQualityFragment.
             _navigateToSleepQuality.value = oldTrip
         }
@@ -368,74 +416,28 @@ class TripTrackerViewModel(
      * Location services code
      */
 
-    protected fun startLocationUpdates() {
-
-        // Create the location request to start receiving updates
-
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.setInterval(INTERVAL)
-        locationRequest.setFastestInterval(FASTEST_INTERVAL)
-
-        // Create LocationSettingsRequest object using location request
-        val builder = LocationSettingsRequest.Builder()
-        builder.addLocationRequest(locationRequest)
-        val locationSettingsRequest = builder.build()
-
-        val settingsClient = LocationServices.getSettingsClient(thisApplication)
-        settingsClient.checkLocationSettings(locationSettingsRequest)
-
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(thisApplication)
-        // new Google API SDK v11 uses getFusedLocationProviderClient(this)
-        if (ActivityCompat.checkSelfPermission(thisApplication, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(thisApplication, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
 
-            return
-        }
-        fusedLocationProviderClient!!.requestLocationUpdates(locationRequest, locationCallback,
-                Looper.myLooper())
+
+    fun onClickStartServiceButton() {
+        Log.d("TrackerFragmentCreate", "inside start listener")
+        Log.d("bind service", "myService =$myService")
+        TrackingService.startService(thisApplication,"I'm tracking now")
+        myService.startDBLogging(database)
     }
 
-    private val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            // do work here
-            locationResult.lastLocation
-            onLocationChanged(locationResult.lastLocation)
-        }
-    }
-    fun onLocationChanged(location: Location) {
-        uiScope.launch {
 
-            val newPoint = RecordedPoint()
-
-            // New location has now been determined
-            previousPoint = currentPoint
-            currentLocation = location
-
-            newPoint.tripId = activeTrip.value!!.tripId
-            newPoint.prevPoint = previousPoint.pointId
-            newPoint.latitude = currentLocation.latitude
-            newPoint.longitude =  currentLocation.longitude
-            newPoint.horizontalAccuracy = currentLocation.accuracy
-            newPoint.bearing = currentLocation.bearing
-            newPoint.bearingAccuracy = currentLocation.bearing
-            newPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
-            newPoint.speed = currentLocation.speed
-            newPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
-
-            withContext(Dispatchers.IO) {
-                recordPoint(newPoint)
-                currentPoint = getCurrentPointFromDatabase()
-            }
-
-            val logString = "ID:"+currentPoint.pointId.toString()+", Lat:"+newPoint.latitude.toString()+", Long:"+newPoint.latitude.toString()
-            Log.d("recordedPoint", logString)
-
-        }
+    fun onClickStopServiceButton() {
+        Log.d("TrackerFragmentCreate", "inside stop listener")
+        TrackingService.stopService(thisApplication)
     }
 
-    private fun stoplocationUpdates() {
-        fusedLocationProviderClient!!.removeLocationUpdates(locationCallback)
-    }
+ fun setBound() {
+     _bound.value = true
+     Log.d("bind service", "manually set bound =" +_bound.value)
+ }
+
+
 
 
 }
