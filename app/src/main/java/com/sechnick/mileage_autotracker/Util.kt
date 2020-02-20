@@ -89,7 +89,6 @@ fun convertNumericQualityToString(quality: Int, resources: Resources): String {
  * Take the Long milliseconds returned by the system and stored in Room,
  * and convert it to a nicely formatted string for display.
  *
- * EEE - Display the short letter version of the weekday
  * MM - Display the number of the month
  * dd-yyyy - day in month and full year numerically
  */
