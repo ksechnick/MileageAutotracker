@@ -18,11 +18,14 @@ package com.sechnick.mileage_autotracker.triptracker
 
 import android.Manifest
 import android.app.Application
+import android.content.ComponentName
 import android.content.Context
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
+import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
@@ -50,6 +53,47 @@ class TripTrackerViewModel(
         dataSource: MileageDatabaseDao,
         val thisApplication: Application) : ViewModel() {
 
+    companion object {
+
+        var myService = TrackingService()
+
+        private val _bound = MutableLiveData<Boolean>()
+        val bound: LiveData<Boolean>
+            get() = _bound
+        fun setBound(value: Boolean){
+            _bound.value = value
+            Log.d("bind service", "bound =" +_bound.value)
+        }
+
+        private val _requestLocationPermission = MutableLiveData<Boolean>()
+        val requestLocationPermission : LiveData<Boolean>
+            get() = _requestLocationPermission
+
+        private val _locationPermissionGranted = MutableLiveData<Boolean>()
+        val locationPermissionGranted : LiveData<Boolean>
+            get() = _locationPermissionGranted
+
+        private val _permissionAck = MutableLiveData<Boolean>()
+        val permissionAck : LiveData<Boolean>
+            get() = _permissionAck
+
+        fun locationPermissionGranted() {
+            _locationPermissionGranted.value = true
+            _requestLocationPermission.value = false
+        }
+
+        fun locationPermissionNotGranted() {
+            _locationPermissionGranted.value = false
+            _requestLocationPermission.value = false
+        }
+
+        val REQUEST_PERMISSION_LOCATION = 10
+
+        var activeTrip = MutableLiveData<RecordedTrip?>()
+
+    }
+
+
     /**
      * Hold a reference to SleepDatabase via SleepDatabaseDao.
      */
@@ -74,7 +118,7 @@ class TripTrackerViewModel(
      */
     private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
 
-    private var activeTrip = MutableLiveData<RecordedTrip?>()
+
 
     val trips = database.getAllTrips()
 
@@ -164,36 +208,36 @@ class TripTrackerViewModel(
     /**
      * variables for location services
      */
-    val REQUEST_PERMISSION_LOCATION = 10
+
 
 
     private val _locationSnackbarText = MutableLiveData<String>()
     val locationSnackbarText : LiveData<String>
         get() = _locationSnackbarText
 
-    private val _requestLocationPermission = MutableLiveData<Boolean>()
-    val requestLocationPermission : LiveData<Boolean>
-        get() = _requestLocationPermission
+//    private val _requestLocationPermission = MutableLiveData<Boolean>()
+//    val requestLocationPermission : LiveData<Boolean>
+//        get() = _requestLocationPermission
+//
+//    private val _locationPermissionGranted = MutableLiveData<Boolean>()
+//    val locationPermissionGranted : LiveData<Boolean>
+//        get() = _locationPermissionGranted
+//
+//    private val _permissionAck = MutableLiveData<Boolean>()
+//    val permissionAck : LiveData<Boolean>
+//        get() = _permissionAck
 
-    private val _locationPermissionGranted = MutableLiveData<Boolean>()
-    val locationPermissionGranted : LiveData<Boolean>
-        get() = _locationPermissionGranted
-
-    private val _permissionAck = MutableLiveData<Boolean>()
-    val permissionAck : LiveData<Boolean>
-        get() = _permissionAck
 
 
-
-    fun locationPermissionGranted() {
-        _locationPermissionGranted.value = true
-        _requestLocationPermission.value = false
-    }
-
-    fun locationPermissionNotGranted() {
-        _locationPermissionGranted.value = false
-        _requestLocationPermission.value = false
-    }
+//    fun locationPermissionGranted() {
+//        _locationPermissionGranted.value = true
+//        _requestLocationPermission.value = false
+//    }
+//
+//    fun locationPermissionNotGranted() {
+//        _locationPermissionGranted.value = false
+//        _requestLocationPermission.value = false
+//    }
 
 
 
@@ -210,6 +254,9 @@ class TripTrackerViewModel(
         _locationPermissionGranted.value = false
         _requestLocationPermission.value = false
         _locationSnackbarText.value = "nothing yet"
+        _bound.value = false
+        Log.d("bind service", "initialized bound =" +_bound.value)
+        Log.d("bind service", "initial myService ="+ myService.toString())
 
     }
 
@@ -294,16 +341,21 @@ class TripTrackerViewModel(
 
            // _requestLocationPermission.value = true
 
-            //Log.d("permissions", "permission request = "+ _requestLocationPermission.value.toString())
+            Log.d("permissions", "permission request = "+ _requestLocationPermission.value.toString())
 
-//            Log.d("permissions", "permission result = "+ _locationPermissionGranted.value.toString())
-//            //if (_locationPermissionGranted.value == true) {
-//            if (true) {
-//                startLocationUpdates()
-//                _locationSnackbarText.value = "victory"
-//            } else {
-//                _locationSnackbarText.value = "never set"
-//            }
+            Log.d("permissions", "permission result = "+ _locationPermissionGranted.value.toString())
+            //if (_locationPermissionGranted.value == true) {
+            if (true) {
+               // myService.startLocationUpdates()
+                _locationSnackbarText.value = "victory"
+            } else {
+                _locationSnackbarText.value = "never set"
+            }
+
+            Log.d("TrackerFragmentCreate", "inside start listener")
+            Log.d("bind service", "myService =$myService")
+            TrackingService.startService(thisApplication,"I'm tracking now")
+            myService.startDBLogging(database)
 
         }
     }
@@ -321,12 +373,13 @@ class TripTrackerViewModel(
             // Update the night in the database to add the end time.
             oldTrip.endTimeMilli = System.currentTimeMillis()
 
-//            if (_locationPermissionGranted.value == true) {
-//                TrackingService. stopLocationUpdates()
-//            }
+            if (_locationPermissionGranted.value == true) {
+                myService.stopLocationUpdates()
+            }
 
             updateTrip(oldTrip)
-
+            Log.d("TrackerFragmentCreate", "inside stop listener")
+            TrackingService.stopService(thisApplication)
             // Set state to navigate to the SleepQualityFragment.
             _navigateToSleepQuality.value = oldTrip
         }
@@ -368,7 +421,9 @@ class TripTrackerViewModel(
 
     fun onClickStartServiceButton() {
         Log.d("TrackerFragmentCreate", "inside start listener")
+        Log.d("bind service", "myService =$myService")
         TrackingService.startService(thisApplication,"I'm tracking now")
+        myService.startDBLogging(database)
     }
 
 
@@ -376,6 +431,13 @@ class TripTrackerViewModel(
         Log.d("TrackerFragmentCreate", "inside stop listener")
         TrackingService.stopService(thisApplication)
     }
+
+ fun setBound() {
+     _bound.value = true
+     Log.d("bind service", "manually set bound =" +_bound.value)
+ }
+
+
 
 
 }

@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
@@ -24,14 +25,16 @@ import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
 import com.sechnick.mileage_autotracker.database.RecordedPoint
 import com.sechnick.mileage_autotracker.database.RecordedTrip
 import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class TrackingService() : Service() {
     private val CHANNEL_ID = "ForegroundService Kotlin"
+    private val binder = LocalBinder()
 
     lateinit var database : MileageDatabaseDao
+
+    private var viewModelJob = Job()
+    private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
 
     companion object {
         fun startService(context: Context, message: String) {
@@ -73,8 +76,9 @@ class TrackingService() : Service() {
     }
 
     override fun onBind(intent: Intent): IBinder? {
-        return null
+        return binder
     }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(CHANNEL_ID, "Foreground Service Channel",
@@ -85,13 +89,15 @@ class TrackingService() : Service() {
     }
 
 
+
+
     lateinit var currentLocation : Location
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private val INTERVAL: Long = 2000
     private val FASTEST_INTERVAL: Long = 1000
     internal var locationRequest: LocationRequest
 
-    private var activeTrip = MutableLiveData<RecordedTrip?>()
+    //private var activeTrip = MutableLiveData<RecordedTrip?>()
     private var currentPoint = RecordedPoint()
     private lateinit var previousPoint: RecordedPoint
 
@@ -103,7 +109,7 @@ class TrackingService() : Service() {
     protected fun startLocationUpdates() {
 
         // Create the location request to start receiving updates
-
+        Log.d("location services", "Starting Location Updates")
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         locationRequest.setInterval(INTERVAL)
         locationRequest.setFastestInterval(FASTEST_INTERVAL)
@@ -136,90 +142,102 @@ class TrackingService() : Service() {
     }
 
     fun onLocationChanged(location: Location) {
-        val newPoint = RecordedPoint()
+        uiScope.launch {
+            val newPoint = RecordedPoint()
 
-        // New location has now been determined
-        //previousPoint = currentPoint
-        currentLocation = location
+            // New location has now been determined
+            previousPoint = currentPoint
+            currentLocation = location
 
-        //newPoint.tripId = activeTrip.value!!.tripId
-        //newPoint.prevPoint = previousPoint.pointId
-        newPoint.latitude = currentLocation.latitude
-        newPoint.longitude =  currentLocation.longitude
-        newPoint.horizontalAccuracy = currentLocation.accuracy
-        newPoint.bearing = currentLocation.bearing
-        newPoint.bearingAccuracy = currentLocation.bearing
-        newPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
-        newPoint.speed = currentLocation.speed
-        newPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
+            newPoint.tripId = TripTrackerViewModel.activeTrip.value!!.tripId
+            newPoint.prevPoint = previousPoint.pointId
+            newPoint.latitude = currentLocation.latitude
+            newPoint.longitude = currentLocation.longitude
+            newPoint.horizontalAccuracy = currentLocation.accuracy
+            newPoint.bearing = currentLocation.bearing
+            newPoint.bearingAccuracy = currentLocation.bearing
+            newPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
+            newPoint.speed = currentLocation.speed
+            newPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
 
-        //recordPoint(newPoint)
-        //currentPoint = getCurrentPointFromDatabase()
-        //previousPoint.nextPoint = currentPoint.pointId
-        //updatePoint(previousPoint)
+            recordPoint(newPoint)
+            currentPoint = getCurrentPointFromDatabase()
+            previousPoint.nextPoint = currentPoint.pointId
+            updatePoint(previousPoint)
 
 
-
-        val logString = "ID:"+newPoint.pointId.toString()+", Lat:"+newPoint.latitude.toString()+", Long:"+newPoint.longitude.toString()
-        Log.d("recordedPoint", logString)
-
+            val logString = "ID:" + newPoint.pointId.toString() + ", Lat:" + newPoint.latitude.toString() + ", Long:" + newPoint.longitude.toString()
+            Log.d("recordedPoint", logString)
+        }
         }
 
 
     fun stopLocationUpdates() {
         fusedLocationProviderClient!!.removeLocationUpdates(locationCallback)
+        Log.d("location services", "Stopping Location Updates")
     }
 
-private suspend fun getCurrentTripFromDatabase(): RecordedTrip? {
-    return withContext(Dispatchers.IO) {
-        var thistrip = database.getCurrentTrip()
-        if (thistrip?.endTimeMilli != thistrip?.startTimeMilli) {
-            thistrip = null
+    private suspend fun getCurrentTripFromDatabase(): RecordedTrip? {
+        return withContext(Dispatchers.IO) {
+            var thistrip = database.getCurrentTrip()
+            if (thistrip?.endTimeMilli != thistrip?.startTimeMilli) {
+                thistrip = null
+            }
+            thistrip
         }
-        thistrip
     }
-}
 
-private suspend fun startTrip(trip: RecordedTrip) {
-    withContext(Dispatchers.IO) {
-        database.startTrip(trip)
-    }
-}
-
-private suspend fun updateTrip(trip: RecordedTrip) {
-    withContext(Dispatchers.IO) {
-        database.updateTrip(trip)
-    }
-}
-
-private suspend fun clearTrips() {
-    withContext(Dispatchers.IO) {
-        database.clearTrips()
-    }
-}
-
-private suspend fun getCurrentPointFromDatabase(): RecordedPoint {
-    return withContext(Dispatchers.IO) {
-        var thisPoint = database.getCurrentPoint()
-        if (thisPoint?.elapsedTime == 0L) {
-            thisPoint = null
-            //TODO("PROBLEM if emptyDB")
+    private suspend fun startTrip(trip: RecordedTrip) {
+        withContext(Dispatchers.IO) {
+            database.startTrip(trip)
         }
-        thisPoint!!
     }
-}
 
-private suspend fun recordPoint(point: RecordedPoint) {
-    withContext(Dispatchers.IO) {
-        database.recordPoint(point)
+    private suspend fun updateTrip(trip: RecordedTrip) {
+        withContext(Dispatchers.IO) {
+            database.updateTrip(trip)
+        }
     }
-}
 
-private suspend fun updatePoint(point: RecordedPoint) {
-    withContext(Dispatchers.IO) {
-        database.updatePoint(point)
+    private suspend fun clearTrips() {
+        withContext(Dispatchers.IO) {
+            database.clearTrips()
+        }
     }
-}
+
+    private suspend fun getCurrentPointFromDatabase(): RecordedPoint {
+        return withContext(Dispatchers.IO) {
+            var thisPoint = database.getCurrentPoint()
+            if (thisPoint?.elapsedTime == 0L) {
+                thisPoint = null
+                //TODO("PROBLEM if emptyDB")
+            }
+            thisPoint!!
+        }
+    }
+
+    private suspend fun recordPoint(point: RecordedPoint) {
+        withContext(Dispatchers.IO) {
+            database.recordPoint(point)
+        }
+    }
+
+    private suspend fun updatePoint(point: RecordedPoint) {
+        withContext(Dispatchers.IO) {
+            database.updatePoint(point)
+        }
+    }
+
+    fun startDBLogging(datasource: MileageDatabaseDao) {
+        database = datasource
+        Log.d("DB assignment", "DB is assigned in service = " + database.toString())
+    }
+
+    inner class LocalBinder : Binder() {
+        // Return this instance of LocalService so clients can call public methods
+        fun getService(): TrackingService = this@TrackingService
+    }
+
 
 
 }

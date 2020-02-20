@@ -99,6 +99,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
+            app:customEnabled="@{tripTrackerViewModel.Companion.bound}"
             android:onClick="@{() -> tripTrackerViewModel.onClickStartServiceButton()}"
             android:text="Start Service"
             app:layout_constraintBaseline_toBaselineOf="@+id/clear_button"
