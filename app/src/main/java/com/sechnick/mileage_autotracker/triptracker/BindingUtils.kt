@@ -62,7 +62,7 @@ fun ImageView.setTripImage(item: RecordedTrip?) {
 }
 
 @BindingAdapter("customEnabled")
-fun Button.setEnabled(item: Boolean) {
+fun Button.setCustomEnabled(item: Boolean) {
     Log.d("data binding", "button visibility =$item")
     isEnabled = item
 }

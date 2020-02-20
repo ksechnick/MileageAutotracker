@@ -419,23 +419,23 @@ class TripTrackerViewModel(
 
 
 
-    fun onClickStartServiceButton() {
-        Log.d("TrackerFragmentCreate", "inside start listener")
-        Log.d("bind service", "myService =$myService")
-        TrackingService.startService(thisApplication,"I'm tracking now")
-        myService.startDBLogging(database)
-    }
-
-
-    fun onClickStopServiceButton() {
-        Log.d("TrackerFragmentCreate", "inside stop listener")
-        TrackingService.stopService(thisApplication)
-    }
-
- fun setBound() {
-     _bound.value = true
-     Log.d("bind service", "manually set bound =" +_bound.value)
- }
+//    fun onClickStartServiceButton() {
+//        Log.d("TrackerFragmentCreate", "inside start listener")
+//        Log.d("bind service", "myService =$myService")
+//        TrackingService.startService(thisApplication,"I'm tracking now")
+//        myService.startDBLogging(database)
+//    }
+//
+//
+//    fun onClickStopServiceButton() {
+//        Log.d("TrackerFragmentCreate", "inside stop listener")
+//        TrackingService.stopService(thisApplication)
+//    }
+//
+// fun setBound() {
+//     _bound.value = true
+//     Log.d("bind service", "manually set bound =" +_bound.value)
+// }
 
 
 
