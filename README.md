@@ -1,7 +1,9 @@
-MileageAutotracker - Solution Code for 7.5
+MileageAutotracker
 =============================================================
 
 My first Android app, intended to A) help me learn B) play with some cool compression for datapoints C) track my mileage for work
+
+It is based heavily on some of the Google Codelabs teaching Kotlin and the Android ecosystem.
 
 License
 -------
