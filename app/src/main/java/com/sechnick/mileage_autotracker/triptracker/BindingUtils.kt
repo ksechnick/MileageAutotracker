@@ -16,17 +16,18 @@
 
 package com.sechnick.mileage_autotracker.triptracker
 
+import android.annotation.SuppressLint
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.databinding.BindingAdapter
-import com.sechnick.mileage_autotracker.R
-import com.sechnick.mileage_autotracker.convertDurationToFormatted
-import com.sechnick.mileage_autotracker.convertNumericQualityToString
+import com.sechnick.mileage_autotracker.*
 import com.sechnick.mileage_autotracker.database.RecordedTrip
+import java.text.DecimalFormat
 
 
-@BindingAdapter("tripDurationFormatted")
-fun TextView.setTripDurationFormatted(item: RecordedTrip?) {
+@BindingAdapter("tripDuration")
+fun TextView.setTripDuration(item: RecordedTrip?) {
     item?.let {
         text = convertDurationToFormatted(item.startTimeMilli, item.endTimeMilli, context.resources)
     }
@@ -54,5 +55,64 @@ fun ImageView.setTripImage(item: RecordedTrip?) {
             5 -> R.drawable.ic_sleep_5
             else -> R.drawable.ic_sleep_active
         })
+    }
+}
+
+@BindingAdapter("tripBusinessPersonal")
+fun TextView.setTripBusinessorPersonal(item: RecordedTrip?) {
+    item?.let {
+        text = if (it.businessTrip) {
+            "Business"
+        } else {
+            "Personal"
+        }
+    }
+}
+
+
+@BindingAdapter("tripDate")
+fun TextView.setTripDate(item: RecordedTrip?) {
+    item?.let {
+        text = convertLongToDateString(it.startTimeMilli)
+    }
+}
+
+@BindingAdapter("tripStartTime")
+fun TextView.setTripStartTime(item: RecordedTrip?) {
+    item?.let {
+        text = convertLongToTimeString(it.startTimeMilli) + "-" + convertLongToTimeString(it.endTimeMilli)
+    }
+}
+
+@BindingAdapter("tripDistance")
+fun TextView.setTripDistance(item: RecordedTrip?) {
+    val df = DecimalFormat("####")
+    item?.let {
+        text = df.format(it.calculatedDistance) + " miles"
+    }
+}
+
+
+
+@BindingAdapter("tripLocations")
+fun TextView.setTripLocations(item: RecordedTrip?) {
+    var combinedText = ""
+    item?.let {
+        if (it.startAddress != ""){
+            combinedText = "Start Address" +System.lineSeparator()+ it.startAddress + System.lineSeparator()+ System.lineSeparator()
+        }
+
+        if (it.startAddress != ""){
+            combinedText = "End Address" +System.lineSeparator()+ it.endAddress + System.lineSeparator()
+        }
+
+        if (combinedText == ""){
+            isVisible = false
+            text = ""
+
+        } else {
+            isVisible = true
+            text = combinedText
+        }
     }
 }

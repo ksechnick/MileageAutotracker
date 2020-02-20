@@ -31,53 +31,114 @@
         android:layout_height="match_parent"
         tools:context=".tripdetail.TripDetailFragment">
 
-        <ImageView
-            android:id="@+id/quality_image"
-            android:layout_width="@dimen/icon_size"
-            android:layout_height="@dimen/icon_size"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="56dp"
-            android:layout_marginEnd="8dp"
-            app:tripImage="@{tripDetailViewModel.trip}"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/quality_string"
-            android:layout_width="wrap_content"
-            android:layout_height="20dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="100dp"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/quality_image"
-            app:tripQualityString="@{tripDetailViewModel.trip}" />
-
-        <TextView
-            android:id="@+id/sleep_length"
-            android:layout_width="wrap_content"
-            android:layout_height="20dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="32dp"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/quality_string"
-            app:tripDurationFormatted="@{tripDetailViewModel.trip}" />
-
         <Button
+            android:id="@+id/detailButtonClose"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
-            android:layout_marginBottom="32dp"
             android:onClick="@{() -> tripDetailViewModel.onClose()}"
             android:text="@string/close"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBaseline_toBaselineOf="@+id/detailButtonEdit"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/detailTextBusinessPersonal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="16dp"
+            android:textSize="30sp"
+            app:layout_constraintEnd_toStartOf="@+id/detailTextDistance"
+            app:layout_constraintHorizontal_bias="0.49"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tripBusinessPersonal="@{tripDetailViewModel.trip}"
+            tools:text="Business" />
+
+        <TextView
+            android:id="@+id/detailTextDistance"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:textAlignment="textEnd"
+            android:textSize="30sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/detailTextBusinessPersonal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/detailTextBusinessPersonal"
+            app:tripDistance="@{tripDetailViewModel.trip}"
+            tools:text="Distance" />
+
+        <TextView
+            android:id="@+id/detailsTextDuration"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:textAlignment="textEnd"
+            android:textSize="24sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/detailTextDate"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/detailTextDate"
+            app:tripDuration="@{tripDetailViewModel.trip}"
+            tools:text="03:30" />
+
+        <TextView
+            android:id="@+id/detailTextDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toTopOf="@+id/detailTextStartStopTime"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/detailTextBusinessPersonal"
+            app:layout_constraintVertical_bias="0.120000005"
+            app:tripDate="@{tripDetailViewModel.trip}"
+            tools:text="01-01-2000" />
+
+        <TextView
+            android:id="@+id/detailTextStartStopTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toTopOf="@+id/detailTextLocations"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/detailTextDate"
+            app:tripStartTime="@{tripDetailViewModel.trip}"
+            tools:text="TextView" />
+
+        <!--android:inputType="textMultiLine"-->
+        <TextView
+            android:id="@+id/detailTextLocations"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="start|top"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toTopOf="@+id/detailButtonEdit"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/detailTextStartStopTime"
+            app:tripLocations="@{tripDetailViewModel.trip}"
+            tools:text="Locations" />
+
+        <Button
+            android:id="@+id/detailButtonEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/detailButtonClose"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="Button" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

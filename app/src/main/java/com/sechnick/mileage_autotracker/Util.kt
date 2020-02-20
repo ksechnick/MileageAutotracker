@@ -18,14 +18,13 @@ package com.sechnick.mileage_autotracker
 
 import android.annotation.SuppressLint
 import android.content.res.Resources
-import android.os.Build
-import android.text.Html
-import android.text.Spanned
+import android.location.Location
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.pow
 
 /**
  * These functions create a formatted string that can be set in a TextView.
@@ -49,21 +48,24 @@ private val ONE_HOUR_MILLIS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS)
  */
 fun convertDurationToFormatted(startTimeMilli: Long, endTimeMilli: Long, res: Resources): String {
     val durationMilli = endTimeMilli - startTimeMilli
-    val weekdayString = SimpleDateFormat("EEEE", Locale.getDefault()).format(startTimeMilli)
-    return when {
-        durationMilli < ONE_MINUTE_MILLIS -> {
-            val seconds = TimeUnit.SECONDS.convert(durationMilli, TimeUnit.MILLISECONDS)
-            res.getString(R.string.seconds_length, seconds, weekdayString)
-        }
-        durationMilli < ONE_HOUR_MILLIS -> {
-            val minutes = TimeUnit.MINUTES.convert(durationMilli, TimeUnit.MILLISECONDS)
-            res.getString(R.string.minutes_length, minutes, weekdayString)
-        }
-        else -> {
-            val hours = TimeUnit.HOURS.convert(durationMilli, TimeUnit.MILLISECONDS)
-            res.getString(R.string.hours_length, hours, weekdayString)
-        }
-    }
+    val seconds = TimeUnit.SECONDS.convert(durationMilli, TimeUnit.MILLISECONDS)
+    val minutes = TimeUnit.MINUTES.convert(durationMilli, TimeUnit.MILLISECONDS)
+    val hours = TimeUnit.HOURS.convert(durationMilli, TimeUnit.MILLISECONDS)
+    return hours.toString()+"hrs "+minutes.toString()+"min"
+//    return when {
+//        durationMilli < ONE_MINUTE_MILLIS -> {
+//            val seconds = TimeUnit.SECONDS.convert(durationMilli, TimeUnit.MILLISECONDS)
+//            res.getString(R.string.seconds_length, seconds, weekdayString)
+//        }
+//        durationMilli < ONE_HOUR_MILLIS -> {
+//            val minutes = TimeUnit.MINUTES.convert(durationMilli, TimeUnit.MILLISECONDS)
+//            res.getString(R.string.minutes_length, minutes, weekdayString)
+//        }
+//        else -> {
+//            val hours = TimeUnit.HOURS.convert(durationMilli, TimeUnit.MILLISECONDS)
+//            res.getString(R.string.hours_length, hours, weekdayString)
+//        }
+//    }
 }
 
 /**
@@ -87,16 +89,34 @@ fun convertNumericQualityToString(quality: Int, resources: Resources): String {
  * Take the Long milliseconds returned by the system and stored in Room,
  * and convert it to a nicely formatted string for display.
  *
- * EEEE - Display the long letter version of the weekday
- * MMM - Display the letter abbreviation of the nmotny
+ * EEE - Display the short letter version of the weekday
+ * MM - Display the number of the month
  * dd-yyyy - day in month and full year numerically
- * HH:mm - Hours and minutes in 24hr format
  */
 @SuppressLint("SimpleDateFormat")
 fun convertLongToDateString(systemTime: Long): String {
-    return SimpleDateFormat("EEEE MMM-dd-yyyy' Time: 'HH:mm")
+    return SimpleDateFormat("MM/dd/yyyy")
             .format(systemTime).toString()
 }
+
+@SuppressLint("SimpleDateFormat")
+fun convertLongToFancyDateString(systemTime: Long): String {
+    return SimpleDateFormat("EEE MM-dd-yyyy' Time: 'HH:mm")
+            .format(systemTime).toString()
+}
+
+@SuppressLint("SimpleDateFormat")
+fun convertLongToTimeString(systemTime: Long): String {
+    return SimpleDateFormat("HH:mm")
+            .format(systemTime).toString()
+}
+
+fun doLocationsOverlap(lat1: Double, long1:Double, horAcc1: Float, lat2: Double, long2:Double, horAcc2: Float) : Boolean {
+    var distance= FloatArray(0)
+    Location.distanceBetween(lat1, long1, lat2, long2, distance)
+    return (distance[0] >= (horAcc1+horAcc2))
+}
+
 
 /**
  * ViewHolder that holds a single [TextView].

@@ -55,7 +55,9 @@
 
     <string name="header_text">Trip History</string>
     <string name="close">Close</string>
+    <string name="Edit">Edit (does nothing)</string>
     <string name="minutes_length">%d minutes on %s</string>
     <string name="hours_length">%d hours on %s</string>
     <string name="seconds_length">%d seconds on %s</string>
+
 </resources>

@@ -33,29 +33,60 @@
         android:layout_height="wrap_content"
         android:onClick="@{() -> clickListener.onClick(trip)}">
 
-        <TextView
-            android:id="@+id/trip_length"
-            android:layout_width="0dp"
-            android:layout_height="20dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/quality_image"
-            app:layout_constraintTop_toTopOf="@+id/quality_image"
-            tools:text="Wednesday"
-            app:tripDurationFormatted="@{trip}"/>
 
         <TextView
-            android:id="@+id/trip_id"
+            android:id="@+id/listTextBusinessPersonal"
             android:layout_width="0dp"
-            android:layout_height="20dp"
-            android:layout_marginTop="8dp"
-            android:text="@{Long.toString(trip.tripId)}"
-            app:layout_constraintEnd_toEndOf="@+id/sleep_length"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="@+id/sleep_length"
-            app:layout_constraintTop_toBottomOf="@+id/sleep_length"
-            tools:text="ID" />
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="16dp"
+            android:textSize="30sp"
+            app:layout_constraintEnd_toStartOf="@+id/listTextDistance"
+            app:layout_constraintHorizontal_bias="0.49"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tripBusinessPersonal="@{trip}"
+            tools:text="Business" />
+
+        <TextView
+            android:id="@+id/listTextDistance"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:textAlignment="textEnd"
+            android:textSize="30sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/listTextBusinessPersonal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/listTextBusinessPersonal"
+            app:tripDistance="@{trip}"
+            tools:text="Distance" />
+
+        <TextView
+            android:id="@+id/listsTextDuration"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:textAlignment="textEnd"
+            android:textSize="24sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/listTextDate"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/listTextDate"
+            app:tripDuration="@{trip}"
+            tools:text="03:30" />
+
+        <TextView
+            android:id="@+id/listTextDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:textSize="24sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/listTextBusinessPersonal"
+            app:tripDate="@{trip}"
+            tools:text="01-01-2000" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

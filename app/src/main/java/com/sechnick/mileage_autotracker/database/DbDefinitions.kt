@@ -186,5 +186,5 @@ data class MileageReport(
 data class TripWithPoints(
         @Embedded val RecordedTrip: RecordedTrip,
         @Relation( parentColumn = "tripId", entityColumn ="trip_id" )
-    val points: List<RecordedPoint>
+        val points: List<RecordedPoint>
 )
