@@ -60,11 +60,11 @@ data class RecordedTrip(
         // in meters?
         //calculated from system location
         @ColumnInfo(name = "calculated_distance")
-        var calculatedDistance: Double = -1.0,
+        var calculatedDistance: Double = 0.0,
 
         // from internet
         @ColumnInfo(name = "routed_distance")
-        var routedDistance: Double = -1.0,
+        var routedDistance: Double = 0.0,
 
         @ColumnInfo(name = "start_mileage")
         var startMileage: Int = -1,

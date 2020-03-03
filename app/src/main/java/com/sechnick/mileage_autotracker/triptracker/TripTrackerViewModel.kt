@@ -90,9 +90,13 @@ class TripTrackerViewModel(
         val REQUEST_PERMISSION_LOCATION = 10
 
         var activeTrip = MutableLiveData<RecordedTrip?>()
+        fun incrementTripDistance(dist : Double){
+            activeTrip.value?.let{
+                activeTrip.value!!.calculatedDistance = activeTrip.value!!.calculatedDistance + dist
+            }
+        }
 
     }
-
 
     /**
      * Hold a reference to SleepDatabase via SleepDatabaseDao.
@@ -355,7 +359,7 @@ class TripTrackerViewModel(
             Log.d("TrackerFragmentCreate", "inside start listener")
             Log.d("bind service", "myService =$myService")
             TrackingService.startService(thisApplication,"I'm tracking now")
-            myService.startDBLogging(database)
+            //myService.startDBLogging(database)
 
         }
     }
@@ -373,11 +377,12 @@ class TripTrackerViewModel(
             // Update the night in the database to add the end time.
             oldTrip.endTimeMilli = System.currentTimeMillis()
 
+            updateTrip(oldTrip)
+
             if (_locationPermissionGranted.value == true) {
                 myService.stopLocationUpdates()
             }
 
-            updateTrip(oldTrip)
             Log.d("TrackerFragmentCreate", "inside stop listener")
             TrackingService.stopService(thisApplication)
             // Set state to navigate to the SleepQualityFragment.

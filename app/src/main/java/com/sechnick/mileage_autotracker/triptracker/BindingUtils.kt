@@ -96,9 +96,9 @@ fun TextView.setTripStartTime(item: RecordedTrip?) {
 
 @BindingAdapter("tripDistance")
 fun TextView.setTripDistance(item: RecordedTrip?) {
-    val df = DecimalFormat("####")
+    val df = DecimalFormat("####.##")
     item?.let {
-        text = df.format(it.calculatedDistance) + " miles"
+        text = df.format(it.calculatedDistance) + " meters"
     }
 }
 

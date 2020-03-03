@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -21,9 +22,11 @@ import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 import com.sechnick.mileage_autotracker.MainActivity
 import com.sechnick.mileage_autotracker.R
+import com.sechnick.mileage_autotracker.database.MileageDatabase
 import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
 import com.sechnick.mileage_autotracker.database.RecordedPoint
 import com.sechnick.mileage_autotracker.database.RecordedTrip
+import com.sechnick.mileage_autotracker.distanceBetween
 import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel
 import kotlinx.coroutines.*
 
@@ -31,7 +34,7 @@ class TrackingService() : Service() {
     private val CHANNEL_ID = "ForegroundService Kotlin"
     private val binder = LocalBinder()
 
-    lateinit var database : MileageDatabaseDao
+    val database = MileageDatabase.getInstance(this).mileageDatabaseDao
 
     private var viewModelJob = Job()
     private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
@@ -73,6 +76,18 @@ class TrackingService() : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stopLocationUpdates()
+        uiScope.launch {
+            val oldTrip = TripTrackerViewModel.activeTrip.value ?: getCurrentTripFromDatabase()
+            oldTrip?.let{
+                if (oldTrip.endTimeMilli == oldTrip.startTimeMilli){
+                // Update the night in the database to add the end time.
+                    oldTrip.endTimeMilli = System.currentTimeMillis()
+
+                    updateTrip(oldTrip)
+                }
+            }
+
+        }
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -111,8 +126,8 @@ class TrackingService() : Service() {
         // Create the location request to start receiving updates
         Log.d("location services", "Starting Location Updates")
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.setInterval(INTERVAL)
-        locationRequest.setFastestInterval(FASTEST_INTERVAL)
+        locationRequest.interval = INTERVAL
+        locationRequest.fastestInterval = FASTEST_INTERVAL
 
         // Create LocationSettingsRequest object using location request
         val builder = LocationSettingsRequest.Builder()
@@ -122,7 +137,7 @@ class TrackingService() : Service() {
         val settingsClient = LocationServices.getSettingsClient(applicationContext)
         settingsClient.checkLocationSettings(locationSettingsRequest)
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(applicationContext)
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         // new Google API SDK v11 uses getFusedLocationProviderClient(this)
         if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(application, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
@@ -131,6 +146,27 @@ class TrackingService() : Service() {
         }
         fusedLocationProviderClient!!.requestLocationUpdates(locationRequest, locationCallback,
                 Looper.myLooper())
+
+//        Log.d("location services", "availability is successful: " + fusedLocationProviderClient!!.locationAvailability.isSuccessful.toString())
+//        Log.d("location services", "availability is complete: " + fusedLocationProviderClient!!.locationAvailability.isComplete.toString())
+//        Log.d("location services", "availability is canceled: " + fusedLocationProviderClient!!.locationAvailability.isCanceled.toString())
+//        Log.d("location services", "last location is successful: " + fusedLocationProviderClient!!.lastLocation.isSuccessful)
+//        Log.d("location services", "last location is complete: " + fusedLocationProviderClient!!.lastLocation.isComplete)
+//        Log.d("location services", "last location is canceled: " + fusedLocationProviderClient!!.lastLocation.isCanceled)
+//        Log.d("location services", "last location is?: " + fusedLocationProviderClient!!.lastLocation.toString())
+//        Log.d("location services", "Location Provider is enabled: " + LocationManager.)
+//        Log.d("location services", "looking to get last current location")
+//
+//        val startLocation = fusedLocationProviderClient!!.lastLocation.result!!
+//        currentPoint.latitude = startLocation.latitude
+//        currentPoint.longitude = startLocation.longitude
+//        currentPoint.horizontalAccuracy = startLocation.accuracy
+//        currentPoint.bearing = startLocation.bearing
+//        currentPoint.bearingAccuracy = startLocation.bearing
+//        currentPoint.elapsedTime = startLocation.elapsedRealtimeNanos
+//        currentPoint.speed = startLocation.speed
+//        currentPoint.speedAccuracy = startLocation.speedAccuracyMetersPerSecond
+
     }
 
     private val locationCallback = object : LocationCallback() {
@@ -146,8 +182,21 @@ class TrackingService() : Service() {
             val newPoint = RecordedPoint()
 
             // New location has now been determined
-            previousPoint = currentPoint
+
             currentLocation = location
+
+            //initialize currentPoint to current location if it doesn't exist
+            if (currentPoint.elapsedTime == 0L){
+                currentPoint.latitude = currentLocation.latitude
+                currentPoint.longitude = currentLocation.longitude
+                currentPoint.horizontalAccuracy = currentLocation.accuracy
+                currentPoint.bearing = currentLocation.bearing
+                currentPoint.bearingAccuracy = currentLocation.bearing
+                currentPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
+                currentPoint.speed = currentLocation.speed
+                currentPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
+            }
+            previousPoint = currentPoint
 
             newPoint.tripId = TripTrackerViewModel.activeTrip.value!!.tripId
             newPoint.prevPoint = previousPoint.pointId
@@ -160,21 +209,35 @@ class TrackingService() : Service() {
             newPoint.speed = currentLocation.speed
             newPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
 
+            var logString = "ID:" + previousPoint.pointId.toString() + ", Lat:" + previousPoint.latitude.toString() + ", Long:" + previousPoint.longitude.toString()
+            Log.d("previousPoint", logString)
+
+            logString = "ID:" + newPoint.pointId.toString() + ", Lat:" + newPoint.latitude.toString() + ", Long:" + newPoint.longitude.toString()
+            Log.d("recordedPoint", logString)
+            var distance=distanceBetween(newPoint.latitude, newPoint.longitude, previousPoint.latitude, previousPoint.longitude)
+            Log.d("distance", distance.toString())
+            TripTrackerViewModel.incrementTripDistance(distance)
+
             recordPoint(newPoint)
             currentPoint = getCurrentPointFromDatabase()
             previousPoint.nextPoint = currentPoint.pointId
             updatePoint(previousPoint)
 
-
-            val logString = "ID:" + newPoint.pointId.toString() + ", Lat:" + newPoint.latitude.toString() + ", Long:" + newPoint.longitude.toString()
-            Log.d("recordedPoint", logString)
         }
         }
 
 
     fun stopLocationUpdates() {
-        fusedLocationProviderClient!!.removeLocationUpdates(locationCallback)
-        Log.d("location services", "Stopping Location Updates")
+        fusedLocationProviderClient?.let {
+            fusedLocationProviderClient!!.removeLocationUpdates(locationCallback)
+            Log.d("location services", "Stopping Location Updates")
+        }
+
+        if (fusedLocationProviderClient == null){
+            Log.d("location services", "location updates already stopped")
+        }
+
+
     }
 
     private suspend fun getCurrentTripFromDatabase(): RecordedTrip? {
@@ -228,10 +291,10 @@ class TrackingService() : Service() {
         }
     }
 
-    fun startDBLogging(datasource: MileageDatabaseDao) {
-        database = datasource
-        Log.d("DB assignment", "DB is assigned in service = " + database.toString())
-    }
+//    fun startDBLogging(datasource: MileageDatabaseDao) {
+//        database = datasource
+//        Log.d("DB assignment", "DB is assigned in service = " + database.toString())
+//    }
 
     inner class LocalBinder : Binder() {
         // Return this instance of LocalService so clients can call public methods

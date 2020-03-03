@@ -22,9 +22,8 @@ import android.location.Location
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.math.pow
+import kotlin.math.*
 
 /**
  * These functions create a formatted string that can be set in a TextView.
@@ -108,6 +107,26 @@ fun convertLongToFancyDateString(systemTime: Long): String {
 fun convertLongToTimeString(systemTime: Long): String {
     return SimpleDateFormat("HH:mm")
             .format(systemTime).toString()
+}
+
+
+fun distanceBetween(lat1: Double, lon1:Double, lat2: Double, lon2:Double) : Double{
+    val R = 6371000 // Radius of the earth in km
+    val dLat = deg2rad(lat2-lat1)  // deg2rad below
+    val dLon = deg2rad(lon2-lon1)
+    val a =
+            sin(dLat/2) * sin(dLat/2) +
+                    cos(deg2rad(lat1)) * cos(deg2rad(lat2)) *
+                    sin(dLon/2) * sin(dLon/2)
+    ;
+    var c = 2 * atan2(sqrt(a), sqrt(1-a))
+    var d = R * c // Distance in km
+    return d
+
+}
+
+fun deg2rad(deg:Double) : Double{
+    return deg*(Math.PI/180)
 }
 
 fun doLocationsOverlap(lat1: Double, long1:Double, horAcc1: Float, lat2: Double, long2:Double, horAcc2: Float) : Boolean {
