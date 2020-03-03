@@ -131,7 +131,11 @@ data class RecordedPoint(
 
     //likelyhood of this point based on model, needed if submitting routes to be displayed
     @ColumnInfo(name = "likelihood_score")
-    var likelihood_score: Float = 0.0f
+    var likelihood_score: Float = 0.0f,
+
+    //calculated incremental distance from previous point
+    @ColumnInfo(name = "distance_from_last")
+    var distanceFromLast: Double = 0.0
 )
 
 /**

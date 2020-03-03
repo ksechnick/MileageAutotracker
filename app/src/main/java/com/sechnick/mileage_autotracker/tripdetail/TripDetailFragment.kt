@@ -49,11 +49,12 @@ class TripDetailFragment : Fragment() {
                 inflater, R.layout.fragment_trip_detail, container, false)
 
         val application = requireNotNull(this.activity).application
-        val arguments = TripDetailFragmentArgs.fromBundle(arguments)
+
 
         // Create an instance of the ViewModel Factory.
         val dataSource = MileageDatabase.getInstance(application).mileageDatabaseDao
-        val viewModelFactory = TripDetailViewModelFactory(arguments.recordedTripKey, dataSource)
+        val arguments = arguments?.let { TripDetailFragmentArgs.fromBundle(it) }
+        val viewModelFactory = arguments?.recordedTripKey?.let { TripDetailViewModelFactory(it, dataSource) }
 
         // Get a reference to the ViewModel associated with this fragment.
         val sleepDetailViewModel =
@@ -67,7 +68,7 @@ class TripDetailFragment : Fragment() {
         binding.setLifecycleOwner(this)
 
         // Add an Observer to the state variable for Navigating when a Quality icon is tapped.
-        sleepDetailViewModel.navigateToSleepTracker.observe(this, Observer {
+        sleepDetailViewModel.navigateToSleepTracker.observe(viewLifecycleOwner, Observer {
             if (it == true) { // Observed state is true.
                 this.findNavController().navigate(
                         TripDetailFragmentDirections.actionSleepDetailFragmentToSleepTrackerFragment())

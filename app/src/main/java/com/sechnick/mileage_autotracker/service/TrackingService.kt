@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -18,12 +17,10 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 import com.sechnick.mileage_autotracker.MainActivity
 import com.sechnick.mileage_autotracker.R
 import com.sechnick.mileage_autotracker.database.MileageDatabase
-import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
 import com.sechnick.mileage_autotracker.database.RecordedPoint
 import com.sechnick.mileage_autotracker.database.RecordedTrip
 import com.sechnick.mileage_autotracker.distanceBetween
@@ -214,9 +211,10 @@ class TrackingService() : Service() {
 
             logString = "ID:" + newPoint.pointId.toString() + ", Lat:" + newPoint.latitude.toString() + ", Long:" + newPoint.longitude.toString()
             Log.d("recordedPoint", logString)
-            var distance=distanceBetween(newPoint.latitude, newPoint.longitude, previousPoint.latitude, previousPoint.longitude)
+            val distance=distanceBetween(newPoint.latitude, newPoint.longitude, previousPoint.latitude, previousPoint.longitude)
             Log.d("distance", distance.toString())
             TripTrackerViewModel.incrementTripDistance(distance)
+            newPoint.distanceFromLast = distance
 
             recordPoint(newPoint)
             currentPoint = getCurrentPointFromDatabase()

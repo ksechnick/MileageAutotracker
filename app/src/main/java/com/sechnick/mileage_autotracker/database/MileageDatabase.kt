@@ -20,6 +20,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
  * A database that stores SleepNight information.
@@ -28,13 +30,20 @@ import androidx.room.RoomDatabase
  * This pattern is pretty much the same for any database,
  * so you can reuse it.
  */
-@Database(entities = [RecordedTrip::class, RecordedPoint::class, KnownDestination::class, MileageReport::class], version = 1, exportSchema = false)
+@Database(entities = [RecordedTrip::class, RecordedPoint::class, KnownDestination::class, MileageReport::class], version = 2, exportSchema = false)
 abstract class MileageDatabase : RoomDatabase() {
 
     /**
      * Connects the database to the DAO.
      */
     abstract val mileageDatabaseDao: MileageDatabaseDao
+
+    class Migration1To2 : Migration(1,2) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE recorded_points"
+                    + " ADD COLUMN distance_from_last REAL NOT NULL DEFAULT 0.0")
+        }
+    }
 
     /**
      * Define a companion object, this allows us to add functions on the SleepDatabase class.
@@ -54,6 +63,9 @@ abstract class MileageDatabase : RoomDatabase() {
          */
         @Volatile
         private var INSTANCE: MileageDatabase? = null
+
+        @JvmField
+        val MIGRATION_1_2 = Migration1To2()
 
         /**
          * Helper function to get the database.
@@ -93,8 +105,9 @@ abstract class MileageDatabase : RoomDatabase() {
                         // Migration is not part of this lesson. You can learn more about
                         // migration with Room in this blog post:
                         // https://medium.com/androiddevelopers/understanding-migrations-with-room-f01e04b07929
-                        .fallbackToDestructiveMigration()
-                        .build()
+                        //.fallbackToDestructiveMigration()
+                            .addMigrations(MIGRATION_1_2)
+                            .build()
                     // Assign INSTANCE to the newly created database.
                     INSTANCE = instance
                 }

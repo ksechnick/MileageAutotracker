@@ -46,6 +46,7 @@ private val ONE_HOUR_MILLIS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS)
  * @param res resources used to load formatted strings
  */
 fun convertDurationToFormatted(startTimeMilli: Long, endTimeMilli: Long, res: Resources): String {
+ // TODO fix time so hours doesn't also include minutes
     val durationMilli = endTimeMilli - startTimeMilli
     val seconds = TimeUnit.SECONDS.convert(durationMilli, TimeUnit.MILLISECONDS)
     val minutes = TimeUnit.MINUTES.convert(durationMilli, TimeUnit.MILLISECONDS)
@@ -118,9 +119,8 @@ fun distanceBetween(lat1: Double, lon1:Double, lat2: Double, lon2:Double) : Doub
             sin(dLat/2) * sin(dLat/2) +
                     cos(deg2rad(lat1)) * cos(deg2rad(lat2)) *
                     sin(dLon/2) * sin(dLon/2)
-    ;
-    var c = 2 * atan2(sqrt(a), sqrt(1-a))
-    var d = R * c // Distance in km
+    val c = 2 * atan2(sqrt(a), sqrt(1-a))
+    val d = R * c // Distance in km
     return d
 
 }
@@ -130,16 +130,7 @@ fun deg2rad(deg:Double) : Double{
 }
 
 fun doLocationsOverlap(lat1: Double, long1:Double, horAcc1: Float, lat2: Double, long2:Double, horAcc2: Float) : Boolean {
-    var distance= FloatArray(0)
+    val distance= FloatArray(0)
     Location.distanceBetween(lat1, long1, lat2, long2, distance)
     return (distance[0] >= (horAcc1+horAcc2))
 }
-
-
-/**
- * ViewHolder that holds a single [TextView].
- *
- * A ViewHolder holds a view for the [RecyclerView] as well as providing additional information
- * to the RecyclerView such as where on the screen it was last drawn during scrolling.
- */
-class TextItemViewHolder(val textView: TextView): RecyclerView.ViewHolder(textView)
