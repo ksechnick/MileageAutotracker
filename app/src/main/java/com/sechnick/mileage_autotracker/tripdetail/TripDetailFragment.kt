@@ -71,7 +71,7 @@ class TripDetailFragment : Fragment() {
         sleepDetailViewModel.navigateToSleepTracker.observe(viewLifecycleOwner, Observer {
             if (it == true) { // Observed state is true.
                 this.findNavController().navigate(
-                        TripDetailFragmentDirections.actionSleepDetailFragmentToSleepTrackerFragment())
+                        TripDetailFragmentDirections.actionTripDetailFragmentToTripTrackerFragment())
                 // Reset state to make sure we only navigate once, even if the device
                 // has a configuration change.
                 sleepDetailViewModel.doneNavigating()

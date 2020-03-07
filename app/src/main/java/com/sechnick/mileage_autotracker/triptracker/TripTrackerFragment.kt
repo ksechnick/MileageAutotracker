@@ -17,13 +17,9 @@
 package com.sechnick.mileage_autotracker.triptracker
 
 import android.Manifest
-import android.content.ComponentName
-import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -34,16 +30,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sechnick.mileage_autotracker.R
 import com.google.android.material.snackbar.Snackbar
-import com.sechnick.mileage_autotracker.MainActivity
-import com.sechnick.mileage_autotracker.service.TrackingService
 import com.sechnick.mileage_autotracker.database.MileageDatabase
 import com.sechnick.mileage_autotracker.databinding.FragmentTripTrackerBinding
-import kotlinx.android.synthetic.main.fragment_trip_tracker.*
 
 /**
  * A fragment with buttons to record start and end times for sleep, which are saved in
@@ -88,9 +80,9 @@ class TripTrackerFragment : Fragment() {
 
         val adapter = RecordedTripAdapter(RecordedTripListener { nightId ->
             //Toast.makeText(context, "${nightId}", Toast.LENGTH_LONG).show()
-            tripTrackerViewModel.onSleepNightClicked(nightId)
+            tripTrackerViewModel.onTripDetailClicked(nightId)
         })
-        binding.sleepList.adapter = adapter
+        binding.tripList.adapter = adapter
 
 
         tripTrackerViewModel.trips.observe(viewLifecycleOwner, Observer {
@@ -101,7 +93,7 @@ class TripTrackerFragment : Fragment() {
 
         // Specify the current activity as the lifecycle owner of the binding.
         // This is necessary so that the binding can observe LiveData updates.
-        binding.setLifecycleOwner(this)
+        binding.lifecycleOwner = this
 
         // Add an Observer on the state variable for showing a Snackbar message
         // when the CLEAR button is pressed.
@@ -119,7 +111,7 @@ class TripTrackerFragment : Fragment() {
         })
 
         // Add an Observer on the state variable for Navigating when STOP button is pressed.
-        tripTrackerViewModel.navigateToSleepQuality.observe(viewLifecycleOwner, Observer { trip ->
+        tripTrackerViewModel.navigateToActiveTrip.observe(viewLifecycleOwner, Observer { trip ->
             trip?.let {
                 // We need to get the navController from this, because button is not ready, and it
                 // just has to be a view. For some reason, this only matters if we hit stop again
@@ -130,7 +122,7 @@ class TripTrackerFragment : Fragment() {
                 // Also: https://stackoverflow.com/questions/28929637/difference-and-uses-of-oncreate-oncreateview-and-onactivitycreated-in-fra
                 this.findNavController().navigate(
                         TripTrackerFragmentDirections
-                                .actionSleepTrackerFragmentToSleepQualityFragment(trip.tripId))
+                                .actionTripTrackerFragmentToActiveTripFragment(trip.tripId))
                 // Reset state to make sure we only navigate once, even if the device
                 // has a configuration change.
                 tripTrackerViewModel.doneNavigating()
@@ -138,13 +130,13 @@ class TripTrackerFragment : Fragment() {
         })
 
         // Add an Observer on the state variable for Navigating when and item is clicked.
-        tripTrackerViewModel.navigateToSleepDetail.observe(viewLifecycleOwner, Observer { trip ->
+        tripTrackerViewModel.navigateToTripDetail.observe(viewLifecycleOwner, Observer { trip ->
             trip?.let {
 
                 this.findNavController().navigate(
                         TripTrackerFragmentDirections
-                                .actionSleepTrackerFragmentToSleepDetailFragment(trip))
-                tripTrackerViewModel.onSleepDetailNavigated()
+                                .actionTripTrackerFragmentToTripDetailFragment(trip))
+                tripTrackerViewModel.onTripDetailNavigated()
             }
         })
 
@@ -173,7 +165,7 @@ class TripTrackerFragment : Fragment() {
 
         val manager = LinearLayoutManager(activity)
 
-        binding.sleepList.layoutManager = manager
+        binding.tripList.layoutManager = manager
 
         return binding.root
     }

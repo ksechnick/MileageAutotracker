@@ -46,7 +46,7 @@ private val ONE_HOUR_MILLIS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS)
  * @param endTimeMilli the end of the interval
  * @param res resources used to load formatted strings
  */
-fun convertDurationToFormatted(startTimeMilli: Long, endTimeMilli: Long, res: Resources): String {
+fun convertDurationToFormatted(startTimeMilli: Long, endTimeMilli: Long): String {
  // TODO fix time so hours doesn't also include minutes
     var timeRemainder =endTimeMilli - startTimeMilli
 
@@ -74,23 +74,6 @@ fun convertDurationToFormatted(startTimeMilli: Long, endTimeMilli: Long, res: Re
 //        }
 //    }
 }
-
-/**
- * Returns a string representing the numeric quality rating.
- */
-fun convertNumericQualityToString(quality: Int, resources: Resources): String {
-    var qualityString = resources.getString(R.string.three_ok)
-    when (quality) {
-        -1 -> qualityString = "--"
-        0 -> qualityString = resources.getString(R.string.zero_very_bad)
-        1 -> qualityString = resources.getString(R.string.one_poor)
-        2 -> qualityString = resources.getString(R.string.two_soso)
-        4 -> qualityString = resources.getString(R.string.four_pretty_good)
-        5 -> qualityString = resources.getString(R.string.five_excellent)
-    }
-    return qualityString
-}
-
 
 /**
  * Take the Long milliseconds returned by the system and stored in Room,
@@ -143,9 +126,15 @@ fun doLocationsOverlap(lat1: Double, long1:Double, horAcc1: Float, lat2: Double,
 }
 
 @Suppress("UNCHECKED_CAST")
-class SafeMutableLiveData<T>(value: T) : LiveData<T>(value) {
+class SafeMutableLiveData<T>(value: T) : SafeLiveData<T>(value) {
 
-    override fun getValue(): T = super.getValue() as T
+    override fun getValue(): T = super.getValue()
     public override fun setValue(value: T) = super.setValue(value)
     public override fun postValue(value: T) = super.postValue(value)
+}
+
+@Suppress("UNCHECKED_CAST")
+open class SafeLiveData<T>(value: T) : LiveData<T>(value) {
+
+    override fun getValue(): T = super.getValue() as T
 }

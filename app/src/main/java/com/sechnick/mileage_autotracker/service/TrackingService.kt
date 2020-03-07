@@ -17,21 +17,15 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.*
-import com.sechnick.mileage_autotracker.MainActivity
+import com.sechnick.mileage_autotracker.*
 import com.sechnick.mileage_autotracker.R
-import com.sechnick.mileage_autotracker.SafeMutableLiveData
 import com.sechnick.mileage_autotracker.database.MileageDatabase
 import com.sechnick.mileage_autotracker.database.RecordedPoint
 import com.sechnick.mileage_autotracker.database.RecordedTrip
-import com.sechnick.mileage_autotracker.distanceBetween
-import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel
-import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModelFactory
 import kotlinx.coroutines.*
+import kotlin.math.absoluteValue
 
 class TrackingService() : Service() {
     private val CHANNEL_ID = "ForegroundService Kotlin"
@@ -39,11 +33,20 @@ class TrackingService() : Service() {
 
     val database = MileageDatabase.getInstance(this).mileageDatabaseDao
 
-    lateinit var tripTrackerViewModel : TripTrackerViewModel
+    private var serviceJob = Job()
+    private val uiScope = CoroutineScope(Dispatchers.Main + serviceJob)
+    private var currentTripID = 0L
 
-    private var viewModelJob = Job()
-    private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
-    private var currentTrip = 0L
+    val _tripDistance = SafeMutableLiveData(0.0)
+    fun setTripDistance(distance: Double){
+        _tripDistance.value = distance
+        Log.d("service livedata test","currentTrip distance: " + tripDistance.value + " for trip " + activeTrip.tripId)
+    }
+    val tripDistance : SafeLiveData<Double>
+        get() = _tripDistance
+
+    var activeTrip = RecordedTrip()
+
     companion object {
         fun startService(context: Context, message: String) {
             val startIntent = Intent(context, TrackingService::class.java)
@@ -82,7 +85,7 @@ class TrackingService() : Service() {
         super.onDestroy()
         stopLocationUpdates()
         uiScope.launch {
-            val oldTrip = TripTrackerViewModel.activeTrip.value
+            val oldTrip = activeTrip
                 if (oldTrip.endTimeMilli == oldTrip.startTimeMilli){
                 // Update the night in the database to add the end time.
                     oldTrip.endTimeMilli = System.currentTimeMillis()
@@ -184,14 +187,13 @@ class TrackingService() : Service() {
     fun onLocationChanged(location: Location) {
         uiScope.launch {
             val newPoint = RecordedPoint()
-
             // New location has now been determined
             currentLocation = location
 
                 // if trip ID isn't the same (start of new trip) then set it to be
-                if (TripTrackerViewModel.activeTrip.value.tripId != currentTrip){
+                if (activeTrip.tripId != currentTripID){
                     currentPoint = RecordedPoint()
-                    currentTrip = TripTrackerViewModel.activeTrip.value.tripId
+                    currentTripID = activeTrip.tripId
 
                     currentPoint.latitude = currentLocation.latitude
                     currentPoint.longitude = currentLocation.longitude
@@ -215,7 +217,7 @@ class TrackingService() : Service() {
 //                }
                 previousPoint = currentPoint
 
-                newPoint.tripId = TripTrackerViewModel.activeTrip.value.tripId
+                newPoint.tripId = activeTrip.tripId
                 newPoint.prevPoint = previousPoint.pointId
                 newPoint.latitude = currentLocation.latitude
                 newPoint.longitude = currentLocation.longitude
@@ -233,16 +235,27 @@ class TrackingService() : Service() {
                 Log.d("recordedPoint", logString)
                 val distance = distanceBetween(newPoint.latitude, newPoint.longitude, previousPoint.latitude, previousPoint.longitude)
                 Log.d("distance", distance.toString())
-                TripTrackerViewModel.incrementTripDistance(distance)
+
+                setTripDistance(tripDistance.value +distance)
+                // currentTrip.calculatedDistance += distance
+
+
+                Log.d("service livedata test","activeTrip distance: " + activeTrip.calculatedDistance)
+
                 newPoint.distanceFromLast = distance
+
+                activeTrip.endTimeMilli = System.currentTimeMillis()
 
                 recordPoint(newPoint)
                 currentPoint = getCurrentPointFromDatabase()
                 _point.value = currentPoint
-            if (previousPoint.pointId == 0L) {
+            if (previousPoint.pointId != 0L) {
                 previousPoint.nextPoint = currentPoint.pointId
                 updatePoint(previousPoint)
             }
+            activeTrip.calculatedDistance = tripDistance.value
+            updateTrip(activeTrip)
+            //activeTrip.value = currentTrip
         }
         }
 

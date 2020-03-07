@@ -35,11 +35,8 @@
         android:layout_height="match_parent"
         tools:context=".triptracker.TripTrackerFragment">
 
-        <!-- This lesson we will switch to RecyclerView to properly
-         display the sleep data-->
-
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/sleep_list"
+            android:id="@+id/trip_list"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toTopOf="@+id/clear_button"
@@ -53,7 +50,6 @@
 
         <Button
             android:id="@+id/start_button"
-            style="@style/SleepButtons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/margin"
@@ -67,7 +63,6 @@
 
         <Button
             android:id="@+id/stop_button"
-            style="@style/SleepButtons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="13dp"
@@ -82,7 +77,6 @@
 
         <Button
             android:id="@+id/clear_button"
-            style="@style/SleepButtons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/margin"

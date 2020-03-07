@@ -42,8 +42,8 @@ class RecordedTripAdapter(val clickListener: RecordedTripListener):
     fun addHeaderAndSubmitList(list: List<RecordedTrip>?) {
         adapterScope.launch {
             val items = when (list) {
-                null -> listOf(DataItem.Header)
-                else -> listOf(DataItem.Header) + list.map { DataItem.RecordedTripItem(it) }
+                null -> null
+                else -> list.map { DataItem.RecordedTripItem(it) }
             }
             withContext(Dispatchers.Main) {
                 submitList(items)

@@ -16,26 +16,9 @@
 
 package com.sechnick.mileage_autotracker.triptracker
 
-import android.Manifest
 import android.app.Application
-import android.content.ComponentName
-import android.content.Context
-import android.content.ServiceConnection
-import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationManager
-import android.os.Build
-import android.os.IBinder
-import android.os.Looper
 import android.util.Log
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.requestPermissions
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
-import androidx.lifecycle.ViewModel
-import com.google.android.gms.location.*
+import androidx.lifecycle.*
 import com.sechnick.mileage_autotracker.SafeMutableLiveData
 import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
 import com.sechnick.mileage_autotracker.database.RecordedPoint
@@ -48,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * ViewModel for SleepTrackerFragment.
+ * ViewModel for TripTrackerFragment.
  */
 class TripTrackerViewModel(
         dataSource: MileageDatabaseDao,
@@ -90,15 +73,13 @@ class TripTrackerViewModel(
 
         val REQUEST_PERMISSION_LOCATION = 10
 
-        var activeTrip = SafeMutableLiveData(RecordedTrip())
-        fun incrementTripDistance(dist : Double){
-                activeTrip.value.calculatedDistance = activeTrip.value.calculatedDistance + dist
-        }
 
     }
 
+    var activeTrip = SafeMutableLiveData(RecordedTrip())
+
     /**
-     * Hold a reference to SleepDatabase via SleepDatabaseDao.
+     * Hold a reference to MileageDatabase via MileageDatabaseDao.
      */
     val database = dataSource
 
@@ -141,6 +122,20 @@ class TripTrackerViewModel(
     val tracking : LiveData<Boolean>
         get() = _tracking
 
+
+    private val _businessClick = MutableLiveData<Boolean>()
+    val businessClick : LiveData<Boolean>
+        get() = _businessClick
+    fun onBusinessClick(){
+        _businessClick.value = true
+    }
+    fun businessClicked(){
+        _businessClick.value = false
+    }
+    init {
+        _businessClick.value = false
+    }
+
     /**
      * If there are any nights in the database, show the CLEAR button.
      */
@@ -162,17 +157,17 @@ class TripTrackerViewModel(
         get() = _showSnackbarEvent
 
     /**
-     * Variable that tells the Fragment to navigate to a specific [SleepQualityFragment]
+     * Variable that tells the Fragment to navigate to a specific [TripQualityFragment]
      *
      * This is private because we don't want to expose setting this value to the Fragment.
      */
-    private val _navigateToSleepQuality = MutableLiveData<RecordedTrip>()
+    private val _navigateToActiveTrip = MutableLiveData<RecordedTrip>()
 
     /**
-     * If this is non-null, immediately navigate to [SleepQualityFragment] and call [doneNavigating]
+     * If this is non-null, immediately navigate to [TripQualityFragment] and call [doneNavigating]
      */
-    val navigateToSleepQuality: LiveData<RecordedTrip>
-        get() = _navigateToSleepQuality
+    val navigateToActiveTrip: LiveData<RecordedTrip>
+        get() = _navigateToActiveTrip
 
     /**
      * Call this immediately after calling `show()` on a toast.
@@ -185,28 +180,28 @@ class TripTrackerViewModel(
     }
 
     /**
-     * Call this immediately after navigating to [SleepQualityFragment]
+     * Call this immediately after navigating to [TripQualityFragment]
      *
      * It will clear the navigation request, so if the user rotates their phone it won't navigate
      * twice.
      */
     fun doneNavigating() {
-        _navigateToSleepQuality.value = null
+        _navigateToActiveTrip.value = null
     }
 
     /**
-     * Navigation for the SleepDetails fragment.
+     * Navigation for the TripDetails fragment.
      */
-    private val _navigateToSleepDetail = MutableLiveData<Long>()
-    val navigateToSleepDetail : LiveData<Long>
-        get() = _navigateToSleepDetail
+    private val _navigateToTripDetail = MutableLiveData<Long>()
+    val navigateToTripDetail : LiveData<Long>
+        get() = _navigateToTripDetail
 
-    fun onSleepNightClicked(id: Long) {
-        _navigateToSleepDetail.value = id
+    fun onTripDetailClicked(id: Long) {
+        _navigateToTripDetail.value = id
     }
 
-    fun onSleepDetailNavigated() {
-        _navigateToSleepDetail.value = null
+    fun onTripDetailNavigated() {
+        _navigateToTripDetail.value = null
     }
 
     /**
@@ -363,9 +358,18 @@ class TripTrackerViewModel(
                 Log.d("TrackerFragmentCreate", "inside start listener")
                 Log.d("bind service", "myService =$myService")
                 TrackingService.startService(thisApplication, "I'm tracking now")
+                myService.activeTrip = activeTrip.value
+                myService.setTripDistance(activeTrip.value.calculatedDistance)
+
+                //myService.activeTrip.vehicleId = 7
+                //activeTrip.value.startMileage = 5
+//                Log.d("start service compare check", "service trip instance: "+ myService.activeTrip.vehicleId)
+//                Log.d("start service compare check", "service trip value instance: "+ myService.activeTrip.startMileage)
+//                Log.d("start service compare check", "viewmodel trip instance: " + activeTrip.toString())
+//                Log.d("start service compare check", "viewmodel trip value instance: "+ activeTrip.value.toString())
                 _tracking.value = true
                 //myService.startDBLogging(database)
-                _navigateToSleepQuality.value = activeTrip.value
+                _navigateToActiveTrip.value = activeTrip.value
             } else {
                 //TODO what if trip not created?
             }
@@ -381,6 +385,8 @@ class TripTrackerViewModel(
             // In Kotlin, the return@label syntax is used for specifying which function among
             // several nested ones this statement returns from.
             // In this case, we are specifying to return from launch().
+
+            activeTrip.value = myService.activeTrip
             val oldTrip = activeTrip.value
 
             // Update the night in the database to add the end time.
@@ -395,16 +401,16 @@ class TripTrackerViewModel(
             Log.d("TrackerFragmentCreate", "inside stop listener")
             TrackingService.stopService(thisApplication)
             _tracking.value = false
-            // Set state to navigate to the SleepQualityFragment.
-            _navigateToSleepQuality.value = oldTrip
+            // Set state to navigate to the ActiveTripFragment.
+            _navigateToActiveTrip.value = oldTrip
         }
     }
 
-    private val _navigateToSleepTracker = MutableLiveData<Boolean?>()
-    val navigateToSleepTracker: LiveData<Boolean?>
-        get() = _navigateToSleepTracker
+    private val _navigateToTripTracker = MutableLiveData<Boolean?>()
+    val navigateToTripTracker: LiveData<Boolean?>
+        get() = _navigateToTripTracker
     fun onTrackerNavigated() {
-        _navigateToSleepTracker.value = null
+        _navigateToTripTracker.value = null
     }
 
 
@@ -424,12 +430,17 @@ class TripTrackerViewModel(
                 myService.stopLocationUpdates()
             }
 
-            Log.d("TrackerFragmentCreate", "inside stop listener")
+            Log.d("ActiveFragmentCreate", "inside stop listener")
             TrackingService.stopService(thisApplication)
             _tracking.value = false
-            // Set state to navigate to the SleepQualityFragment.
-            _navigateToSleepTracker.value = true
+            // Set state to navigate to the ActiveTripFragment.
+            _navigateToTripTracker.value = true
         }
+    }
+
+    fun onBackActiveScreen() {
+            // Set state to navigate to the ActiveTripFragment.
+            _navigateToTripTracker.value = true
     }
 
 
