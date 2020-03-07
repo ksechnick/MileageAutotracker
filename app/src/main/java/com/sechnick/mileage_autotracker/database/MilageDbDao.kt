@@ -68,7 +68,7 @@ interface MileageDatabaseDao {
     /**
      * Selects and returns the latest point.
      */
-    @Query("SELECT * FROM recorded_points ORDER BY elapsed_time DESC LIMIT 1")
+    @Query("SELECT * FROM recorded_points ORDER BY pointId DESC LIMIT 1")
     fun getCurrentPoint(): RecordedPoint?
 
     /**

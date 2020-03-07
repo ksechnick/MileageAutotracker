@@ -20,6 +20,7 @@ import android.annotation.SuppressLint
 import android.content.res.Resources
 import android.location.Location
 import android.widget.TextView
+import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
@@ -47,10 +48,16 @@ private val ONE_HOUR_MILLIS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS)
  */
 fun convertDurationToFormatted(startTimeMilli: Long, endTimeMilli: Long, res: Resources): String {
  // TODO fix time so hours doesn't also include minutes
-    val durationMilli = endTimeMilli - startTimeMilli
-    val seconds = TimeUnit.SECONDS.convert(durationMilli, TimeUnit.MILLISECONDS)
-    val minutes = TimeUnit.MINUTES.convert(durationMilli, TimeUnit.MILLISECONDS)
-    val hours = TimeUnit.HOURS.convert(durationMilli, TimeUnit.MILLISECONDS)
+    var timeRemainder =endTimeMilli - startTimeMilli
+
+    //at each step, calculate the integer number of hours, then convert back to ms and subtract from time to leave remainder at next set of units
+    // without this you end up with silly notations like 1 hr 72 min, instead of 1hr 12 min
+    val hours = TimeUnit.HOURS.convert(timeRemainder, TimeUnit.MILLISECONDS)
+    timeRemainder -= TimeUnit.MILLISECONDS.convert(hours, TimeUnit.HOURS)
+    val minutes = TimeUnit.MINUTES.convert(timeRemainder, TimeUnit.MILLISECONDS)
+    timeRemainder -= TimeUnit.MILLISECONDS.convert(hours, TimeUnit.MINUTES)
+    val seconds = TimeUnit.SECONDS.convert(timeRemainder, TimeUnit.MILLISECONDS)
+    timeRemainder -= TimeUnit.MILLISECONDS.convert(hours, TimeUnit.SECONDS) // ms left over
     return hours.toString()+"hrs "+minutes.toString()+"min"
 //    return when {
 //        durationMilli < ONE_MINUTE_MILLIS -> {
@@ -133,4 +140,12 @@ fun doLocationsOverlap(lat1: Double, long1:Double, horAcc1: Float, lat2: Double,
     val distance= FloatArray(0)
     Location.distanceBetween(lat1, long1, lat2, long2, distance)
     return (distance[0] >= (horAcc1+horAcc2))
+}
+
+@Suppress("UNCHECKED_CAST")
+class SafeMutableLiveData<T>(value: T) : LiveData<T>(value) {
+
+    override fun getValue(): T = super.getValue() as T
+    public override fun setValue(value: T) = super.setValue(value)
+    public override fun postValue(value: T) = super.postValue(value)
 }

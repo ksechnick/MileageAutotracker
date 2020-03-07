@@ -61,7 +61,7 @@
             android:onClick="@{() -> tripTrackerViewModel.onStart()}"
             android:text="@string/start"
             app:layout_constraintBaseline_toBaselineOf="@id/stop_button"
-            app:layout_constraintEnd_toStartOf="@+id/stop_button"
+            app:layout_constraintEnd_toStartOf="@+id/textTracking"
             app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -70,13 +70,14 @@
             style="@style/SleepButtons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="13dp"
             android:layout_marginTop="@dimen/margin"
             android:layout_marginEnd="@dimen/margin"
             android:enabled="@{tripTrackerViewModel.stopButtonVisible}"
-            android:onClick="@{() -> tripTrackerViewModel.onStop()}"
+            android:onClick="@{() -> tripTrackerViewModel.onStopTrackerScreen()}"
             android:text="@string/stop"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/start_button"
+            app:layout_constraintStart_toEndOf="@+id/textTracking"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
@@ -93,6 +94,16 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/textTracking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:trackingText="@{tripTrackerViewModel.tracking}"
+            app:layout_constraintBaseline_toBaselineOf="@+id/stop_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="isthistracking?"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

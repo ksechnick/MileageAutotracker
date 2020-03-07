@@ -29,7 +29,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.sechnick.mileage_autotracker.database.MileageDatabase
 import com.sechnick.mileage_autotracker.service.TrackingService
 import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel
@@ -38,7 +38,7 @@ import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModelFactory
 
 class MainActivity : AppCompatActivity() {
 
-    //lateinit var tripTrackerViewModel : TripTrackerViewModel
+    lateinit var tripTrackerViewModel : TripTrackerViewModel
 
 //    companion object {
 //
@@ -62,6 +62,15 @@ class MainActivity : AppCompatActivity() {
         Intent(this, TrackingService::class.java).also { intent ->
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
+        // Create an instance of the ViewModel Factory.
+        val dataSource = MileageDatabase.getInstance(application).mileageDatabaseDao
+        val viewModelFactory = TripTrackerViewModelFactory(dataSource, application) as ViewModelProvider.Factory
+
+        // Get a reference to the ViewModel associated with this fragment.
+        tripTrackerViewModel =
+                ViewModelProvider(
+                        this, viewModelFactory).get(TripTrackerViewModel::class.java)
+
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

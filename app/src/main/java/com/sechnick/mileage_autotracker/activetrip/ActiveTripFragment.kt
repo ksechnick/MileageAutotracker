@@ -17,17 +17,22 @@
 package com.sechnick.mileage_autotracker.activetrip
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.fragment.findNavController
 import com.sechnick.mileage_autotracker.R
 import com.sechnick.mileage_autotracker.database.MileageDatabase
 import com.sechnick.mileage_autotracker.databinding.FragmentActiveTripBinding
+import com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel
+import kotlinx.android.synthetic.main.fragment_active_trip.*
 
 /**
  * Fragment that displays a list of clickable icons,
@@ -36,6 +41,8 @@ import com.sechnick.mileage_autotracker.databinding.FragmentActiveTripBinding
  * and the database is updated.
  */
 class ActiveTripFragment : Fragment() {
+
+    val tripTrackerViewModel : TripTrackerViewModel by activityViewModels()
 
     /**
      * Called when the Fragment is ready to display content to the screen.
@@ -58,16 +65,23 @@ class ActiveTripFragment : Fragment() {
 
         // Create an instance of the ViewModel Factory.
         val dataSource = MileageDatabase.getInstance(application).mileageDatabaseDao
-        val viewModelFactory = arguments?.recordedTripKey?.let { ActiveTripViewModelFactory(it, dataSource) }
+        val viewModelFactory  = arguments?.recordedTripKey?.let { ActiveTripViewModelFactory(it, dataSource) } as ViewModelProvider.Factory
 
         // Get a reference to the ViewModel associated with this fragment.
         val activeTripViewModel =
-                ViewModelProviders.of(
-                        this, viewModelFactory).get(ActiveTripViewModel::class.java)
+                ViewModelProvider(
+                        activity as ViewModelStoreOwner, viewModelFactory).get(ActiveTripViewModel::class.java)
+
+
+//        tripTrackerViewModel =
+//                ViewModelProvider(
+//                        activity as ViewModelStoreOwner, viewModelFactory).get(TripTrackerViewModel::class.java)
 
         // To use the View Model with data binding, you have to explicitly
         // give the binding object a reference to it.
         binding.sleepQualityViewModel = activeTripViewModel
+
+        binding.tripTrackerViewModel = tripTrackerViewModel
 
         // Add an Observer to the state variable for Navigating when a Quality icon is tapped.
         activeTripViewModel.navigateToSleepTracker.observe(viewLifecycleOwner, Observer {
@@ -80,6 +94,35 @@ class ActiveTripFragment : Fragment() {
             }
         })
 
+        // Add an Observer to the state variable for Navigating when a Quality icon is tapped.
+        tripTrackerViewModel.navigateToSleepTracker.observe(viewLifecycleOwner, Observer {
+            if (it == true) { // Observed state is true.
+                this.findNavController().navigate(
+                        ActiveTripFragmentDirections.actionSleepQualityFragmentToSleepTrackerFragment())
+                // Reset state to make sure we only navigate once, even if the device
+                // has a configuration change.
+                tripTrackerViewModel.onTrackerNavigated()
+            }
+        })
+
+
+
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        TripTrackerViewModel.myService.point.observe(viewLifecycleOwner, Observer {
+            imageArrow.rotation = it.bearing
+            Log.d("service live data", "bearing = "+it.bearing)
+        })
+
+//        imageArrow.setOnClickListener{
+//            imageArrow.rotation = TripTrackerViewModel.myService.point.bearing
+//        }
+
+        //TODO add background worker to allow for updates to this?
+        //imageArrow.rotation = TripTrackerViewModel.myService.currentPoint.bearing
     }
 }

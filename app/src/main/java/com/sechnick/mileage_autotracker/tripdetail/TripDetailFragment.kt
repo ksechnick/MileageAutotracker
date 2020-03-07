@@ -23,7 +23,7 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.sechnick.mileage_autotracker.R
 import com.sechnick.mileage_autotracker.database.MileageDatabase
@@ -54,18 +54,18 @@ class TripDetailFragment : Fragment() {
         // Create an instance of the ViewModel Factory.
         val dataSource = MileageDatabase.getInstance(application).mileageDatabaseDao
         val arguments = arguments?.let { TripDetailFragmentArgs.fromBundle(it) }
-        val viewModelFactory = arguments?.recordedTripKey?.let { TripDetailViewModelFactory(it, dataSource) }
+        val viewModelFactory = arguments?.recordedTripKey?.let { TripDetailViewModelFactory(it, dataSource) } as ViewModelProvider.Factory
 
         // Get a reference to the ViewModel associated with this fragment.
         val sleepDetailViewModel =
-                ViewModelProviders.of(
+                ViewModelProvider(
                         this, viewModelFactory).get(TripDetailViewModel::class.java)
 
         // To use the View Model with data binding, you have to explicitly
         // give the binding object a reference to it.
         binding.tripDetailViewModel = sleepDetailViewModel
 
-        binding.setLifecycleOwner(this)
+        binding.lifecycleOwner = this
 
         // Add an Observer to the state variable for Navigating when a Quality icon is tapped.
         sleepDetailViewModel.navigateToSleepTracker.observe(viewLifecycleOwner, Observer {

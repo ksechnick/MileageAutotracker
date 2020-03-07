@@ -126,3 +126,12 @@ fun TextView.setTripLocations(item: RecordedTrip?) {
         }
     }
 }
+
+@BindingAdapter("trackingText")
+fun TextView.setTrackingText(item: Boolean) {
+    if (item) {
+        text = "Tracking On"
+    } else {
+        text = "Tracking Off"
+    }
+}

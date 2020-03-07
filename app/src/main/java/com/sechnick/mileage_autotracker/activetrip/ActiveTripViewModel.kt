@@ -109,4 +109,5 @@ class ActiveTripViewModel(
             _navigateToSleepTracker.value = true
         }
     }
+
 }

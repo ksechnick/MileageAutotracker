@@ -27,6 +27,10 @@
         <variable
             name="sleepQualityViewModel"
             type="com.sechnick.mileage_autotracker.activetrip.ActiveTripViewModel" />
+
+        <variable
+            name="tripTrackerViewModel"
+            type="com.sechnick.mileage_autotracker.triptracker.TripTrackerViewModel" />
     </data>
 
     <!-- Start of the visible fragment layout using ConstraintLayout -->
@@ -125,6 +129,32 @@
             app:layout_constraintStart_toEndOf="@+id/quality_four_image"
             app:layout_constraintTop_toTopOf="@+id/quality_four_image"
             app:srcCompat="@drawable/ic_sleep_5" />
+
+        <Button
+            android:id="@+id/buttonStopTrip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stop Trip"
+            android:onClick="@{() -> tripTrackerViewModel.onStopActiveScreen()}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.499"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageArrow"
+            app:layout_constraintVertical_bias="0.811" />
+
+        <ImageView
+            android:id="@+id/imageArrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="360dp"
+            android:contentDescription="GPS arrow"
+            android:src="@drawable/ic_arrow"
+            android:rotation="45.0"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.499"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -36,6 +36,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import com.google.android.gms.location.*
+import com.sechnick.mileage_autotracker.SafeMutableLiveData
 import com.sechnick.mileage_autotracker.database.MileageDatabaseDao
 import com.sechnick.mileage_autotracker.database.RecordedPoint
 import com.sechnick.mileage_autotracker.database.RecordedTrip
@@ -89,11 +90,9 @@ class TripTrackerViewModel(
 
         val REQUEST_PERMISSION_LOCATION = 10
 
-        var activeTrip = MutableLiveData<RecordedTrip?>()
+        var activeTrip = SafeMutableLiveData(RecordedTrip())
         fun incrementTripDistance(dist : Double){
-            activeTrip.value?.let{
-                activeTrip.value!!.calculatedDistance = activeTrip.value!!.calculatedDistance + dist
-            }
+                activeTrip.value.calculatedDistance = activeTrip.value.calculatedDistance + dist
         }
 
     }
@@ -130,16 +129,17 @@ class TripTrackerViewModel(
     /**
      * If tonight has not been set, then the START button should be visible.
      */
-    val startButtonVisible = Transformations.map(activeTrip) {
-        null == it
-    }
+    val startButtonVisible = true //activeTrip.value.tripId == 0L
+
 
     /**
      * If tonight has been set, then the STOP button should be visible.
      */
-    val stopButtonVisible = Transformations.map(activeTrip) {
-        null != it
-    }
+    val stopButtonVisible = true //activeTrip.value.tripId != 0L
+
+    private val _tracking = MutableLiveData<Boolean>()
+    val tracking : LiveData<Boolean>
+        get() = _tracking
 
     /**
      * If there are any nights in the database, show the CLEAR button.
@@ -277,14 +277,14 @@ class TripTrackerViewModel(
      *  If the start time and end time are not the same, then we do not have an unfinished
      *  recording.
      */
-    private suspend fun getCurrentTripFromDatabase(): RecordedTrip? {
+    private suspend fun getCurrentTripFromDatabase(): RecordedTrip {
         return withContext(Dispatchers.IO) {
             var thistrip = database.getCurrentTrip()
-            if (thistrip?.endTimeMilli != thistrip?.startTimeMilli) {
-                thistrip = null
+            if (thistrip == null) {
+                thistrip = RecordedTrip()
             }
             thistrip
-        }
+        }!!
     }
 
     private suspend fun startTrip(trip: RecordedTrip) {
@@ -341,25 +341,34 @@ class TripTrackerViewModel(
 
             startTrip(trip)
 
+            _tracking.value = true
+
             activeTrip.value = getCurrentTripFromDatabase()
 
-           // _requestLocationPermission.value = true
+            if (activeTrip.value.tripId != 0L) {
 
-            Log.d("permissions", "permission request = "+ _requestLocationPermission.value.toString())
+                // _requestLocationPermission.value = true
 
-            Log.d("permissions", "permission result = "+ _locationPermissionGranted.value.toString())
-            //if (_locationPermissionGranted.value == true) {
-            if (true) {
-               // myService.startLocationUpdates()
-                _locationSnackbarText.value = "victory"
+                Log.d("permissions", "permission request = " + _requestLocationPermission.value.toString())
+
+                Log.d("permissions", "permission result = " + _locationPermissionGranted.value.toString())
+                //if (_locationPermissionGranted.value == true) {
+                if (true) {
+                    // myService.startLocationUpdates()
+                    _locationSnackbarText.value = "victory"
+                } else {
+                    _locationSnackbarText.value = "never set"
+                }
+
+                Log.d("TrackerFragmentCreate", "inside start listener")
+                Log.d("bind service", "myService =$myService")
+                TrackingService.startService(thisApplication, "I'm tracking now")
+                _tracking.value = true
+                //myService.startDBLogging(database)
+                _navigateToSleepQuality.value = activeTrip.value
             } else {
-                _locationSnackbarText.value = "never set"
+                //TODO what if trip not created?
             }
-
-            Log.d("TrackerFragmentCreate", "inside start listener")
-            Log.d("bind service", "myService =$myService")
-            TrackingService.startService(thisApplication,"I'm tracking now")
-            //myService.startDBLogging(database)
 
         }
     }
@@ -367,12 +376,12 @@ class TripTrackerViewModel(
     /**
      * Executes when the STOP button is clicked.
      */
-    fun onStop() {
+    fun onStopTrackerScreen() {
         uiScope.launch {
             // In Kotlin, the return@label syntax is used for specifying which function among
             // several nested ones this statement returns from.
             // In this case, we are specifying to return from launch().
-            val oldTrip = activeTrip.value ?: return@launch
+            val oldTrip = activeTrip.value
 
             // Update the night in the database to add the end time.
             oldTrip.endTimeMilli = System.currentTimeMillis()
@@ -385,25 +394,59 @@ class TripTrackerViewModel(
 
             Log.d("TrackerFragmentCreate", "inside stop listener")
             TrackingService.stopService(thisApplication)
+            _tracking.value = false
             // Set state to navigate to the SleepQualityFragment.
             _navigateToSleepQuality.value = oldTrip
         }
     }
 
+    private val _navigateToSleepTracker = MutableLiveData<Boolean?>()
+    val navigateToSleepTracker: LiveData<Boolean?>
+        get() = _navigateToSleepTracker
+    fun onTrackerNavigated() {
+        _navigateToSleepTracker.value = null
+    }
+
+
+    fun onStopActiveScreen() {
+        uiScope.launch {
+            // In Kotlin, the return@label syntax is used for specifying which function among
+            // several nested ones this statement returns from.
+            // In this case, we are specifying to return from launch().
+            val oldTrip = activeTrip.value
+
+            // Update the night in the database to add the end time.
+            oldTrip.endTimeMilli = System.currentTimeMillis()
+
+            updateTrip(oldTrip)
+
+            if (_locationPermissionGranted.value == true) {
+                myService.stopLocationUpdates()
+            }
+
+            Log.d("TrackerFragmentCreate", "inside stop listener")
+            TrackingService.stopService(thisApplication)
+            _tracking.value = false
+            // Set state to navigate to the SleepQualityFragment.
+            _navigateToSleepTracker.value = true
+        }
+    }
+
+
     /**
      * Executes when the CLEAR button is clicked.
      */
     fun onClear() {
-        uiScope.launch {
-            // Clear the database table.
-            clearTrips()
-
-            // And clear tonight since it's no longer in the database
-            activeTrip.value = null
-
-            // Show a snackbar message, because it's friendly.
-            _showSnackbarEvent.value = true
-        }
+//        uiScope.launch {
+//            // Clear the database table.
+//            clearTrips()
+//
+//            // And clear tonight since it's no longer in the database
+//            activeTrip.value = RecordedTrip()
+//
+//            // Show a snackbar message, because it's friendly.
+//            _showSnackbarEvent.value = true
+//        }
     }
 
     /**
