@@ -37,6 +37,9 @@ class TrackingService() : Service() {
     private val uiScope = CoroutineScope(Dispatchers.Main + serviceJob)
     private var currentTripID = 0L
 
+
+    //_TODO tripdistance & _thisdistance should be private?
+
     val _tripDistance = SafeMutableLiveData(0.0)
     fun setTripDistance(distance: Double){
         _tripDistance.value = distance
@@ -44,6 +47,10 @@ class TrackingService() : Service() {
     }
     val tripDistance : SafeLiveData<Double>
         get() = _tripDistance
+
+    val _thisDistance = SafeMutableLiveData(0.0)
+    val thisDistance : SafeLiveData<Double>
+        get() = _thisDistance
 
     var activeTrip = RecordedTrip()
 
@@ -190,20 +197,20 @@ class TrackingService() : Service() {
             // New location has now been determined
             currentLocation = location
 
-                // if trip ID isn't the same (start of new trip) then set it to be
-                if (activeTrip.tripId != currentTripID){
-                    currentPoint = RecordedPoint()
-                    currentTripID = activeTrip.tripId
+            // if trip ID isn't the same (start of new trip) then set it to be
+            if (activeTrip.tripId != currentTripID){
+                currentPoint = RecordedPoint()
+                currentTripID = activeTrip.tripId
 
-                    currentPoint.latitude = currentLocation.latitude
-                    currentPoint.longitude = currentLocation.longitude
-                    currentPoint.horizontalAccuracy = currentLocation.accuracy
-                    currentPoint.bearing = currentLocation.bearing
-                    currentPoint.bearingAccuracy = currentLocation.bearing
-                    currentPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
-                    currentPoint.speed = currentLocation.speed
-                    currentPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
-                }
+                currentPoint.latitude = currentLocation.latitude
+                currentPoint.longitude = currentLocation.longitude
+                currentPoint.horizontalAccuracy = currentLocation.accuracy
+                currentPoint.bearing = currentLocation.bearing
+                currentPoint.bearingAccuracy = currentLocation.bearing
+                currentPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
+                currentPoint.speed = currentLocation.speed
+                currentPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
+            }
 //                            //initialize currentPoint to current location if it doesn't exist
 //                if (currentPoint.elapsedTime == 0L) {
 //                    currentPoint.latitude = currentLocation.latitude
@@ -215,47 +222,58 @@ class TrackingService() : Service() {
 //                    currentPoint.speed = currentLocation.speed
 //                    currentPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
 //                }
-                previousPoint = currentPoint
+            previousPoint = currentPoint
 
-                newPoint.tripId = activeTrip.tripId
-                newPoint.prevPoint = previousPoint.pointId
-                newPoint.latitude = currentLocation.latitude
-                newPoint.longitude = currentLocation.longitude
-                newPoint.horizontalAccuracy = currentLocation.accuracy
-                newPoint.bearing = currentLocation.bearing
-                newPoint.bearingAccuracy = currentLocation.bearing
-                newPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
-                newPoint.speed = currentLocation.speed
-                newPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
+            newPoint.tripId = activeTrip.tripId
+            newPoint.prevPoint = previousPoint.pointId
+            newPoint.latitude = currentLocation.latitude
+            newPoint.longitude = currentLocation.longitude
+            newPoint.horizontalAccuracy = currentLocation.accuracy
+            newPoint.bearing = currentLocation.bearing
+            newPoint.bearingAccuracy = currentLocation.bearing
+            newPoint.elapsedTime = currentLocation.elapsedRealtimeNanos
+            newPoint.speed = currentLocation.speed
+            newPoint.speedAccuracy = currentLocation.speedAccuracyMetersPerSecond
 
-                var logString = "ID:" + previousPoint.pointId.toString() + ", Lat:" + previousPoint.latitude.toString() + ", Long:" + previousPoint.longitude.toString()
-                Log.d("previousPoint", logString)
+            var logString = "ID:" + previousPoint.pointId.toString() + ", Lat:" + previousPoint.latitude.toString() + ", Long:" + previousPoint.longitude.toString()
+            Log.d("previousPoint", logString)
 
-                logString = "ID:" + newPoint.pointId.toString() + ", Lat:" + newPoint.latitude.toString() + ", Long:" + newPoint.longitude.toString()
-                Log.d("recordedPoint", logString)
-                val distance = distanceBetween(newPoint.latitude, newPoint.longitude, previousPoint.latitude, previousPoint.longitude)
-                Log.d("distance", distance.toString())
+            logString = "ID:" + newPoint.pointId.toString() + ", Lat:" + newPoint.latitude.toString() + ", Long:" + newPoint.longitude.toString()
+            Log.d("recordedPoint", logString)
+            val distance = distanceBetween(newPoint.latitude, newPoint.longitude, previousPoint.latitude, previousPoint.longitude)
+            Log.d("distance", distance.toString())
+            newPoint.distanceFromLast = distance
+            _thisDistance.value = distance
+            Log.d("distance", thisDistance.value.toString())
 
+            //standstill detection: do not record too many points at standstill, to avoid accumulated distance errors
+            //if last point is more than 60s ago, record point (again, empirical)
+            //(newPoint.elapsedTime - previousPoint.elapsedTime)/1000/1000/1000 > 60 ||
+            //if distance to previous point is less than 3m, do not record (3m taken empirically from minimal testing)
+            //if speed is more than 3x uncertainty (taken empirically), record distance?
+            //(newPoint.speed > 3*newPoint.speedAccuracy)  speed & uncertainty check to try later?
+
+
+            val criteria =  distance > 3.0
+            if (criteria) {
                 setTripDistance(tripDistance.value +distance)
                 // currentTrip.calculatedDistance += distance
-
-
                 Log.d("service livedata test","activeTrip distance: " + activeTrip.calculatedDistance)
-
-                newPoint.distanceFromLast = distance
-
-                activeTrip.endTimeMilli = System.currentTimeMillis()
-
                 recordPoint(newPoint)
                 currentPoint = getCurrentPointFromDatabase()
                 _point.value = currentPoint
-            if (previousPoint.pointId != 0L) {
-                previousPoint.nextPoint = currentPoint.pointId
-                updatePoint(previousPoint)
+
+
+
+                if (previousPoint.pointId != 0L) {
+                    previousPoint.nextPoint = currentPoint.pointId
+                    updatePoint(previousPoint)
+                }
+                activeTrip.endTimeMilli = System.currentTimeMillis()
+                activeTrip.calculatedDistance = tripDistance.value
+                updateTrip(activeTrip)
+                //activeTrip.value = currentTrip
             }
-            activeTrip.calculatedDistance = tripDistance.value
-            updateTrip(activeTrip)
-            //activeTrip.value = currentTrip
         }
         }
 

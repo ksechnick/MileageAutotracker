@@ -36,6 +36,10 @@
             name="distance"
             type="Double" />
 
+        <variable
+            name="thisDistance"
+            type="Double" />
+
 
     </data>
 
@@ -79,8 +83,11 @@
             android:textSize="30sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/quality_two_image"
-            app:tripDistance="@{distance}"
+
             tools:text="Distance" />
+
+        <!--            app:tripDistance="@{distance}"-->
+
         <TextView
             android:id="@+id/textstaticActiveElapsedDistance"
             android:layout_width="wrap_content"
@@ -148,6 +155,17 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textThisDistance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="60dp"
+            android:layout_marginTop="68dp"
+            android:textSize="30sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Distance" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

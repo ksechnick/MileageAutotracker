@@ -65,7 +65,7 @@ class ActiveTripFragment : Fragment() {
         // give the binding object a reference to it.
         binding.tripTrackerViewModel = tripTrackerViewModel
         binding.trip = tripTrackerViewModel.activeTrip.value
-        binding.distance = TripTrackerViewModel.myService.tripDistance.value
+      //  binding.distance = TripTrackerViewModel.myService.tripDistance.value
 
         binding.lifecycleOwner = viewLifecycleOwner
 
@@ -104,6 +104,14 @@ class ActiveTripFragment : Fragment() {
   //          val df = DecimalFormat("####.##")
                 textActiveDistance.text = DecimalFormat("####.##").format(it) + " meters"
                 textActiveElapsedTime.text = convertDurationToFormatted(tripTrackerViewModel.activeTrip.value.startTimeMilli, System.currentTimeMillis())
+        })
+
+        TripTrackerViewModel.myService.thisDistance.observe(viewLifecycleOwner, Observer {
+            //          val df = DecimalFormat("####.##")
+            Log.d("thisDistance", "passed distance= " + it)
+            Log.d("thisDistance", "passed distance= " + TripTrackerViewModel.myService.thisDistance.value)
+            textThisDistance.text = DecimalFormat("####.##").format(it) + " meters"
+
         })
 
     }
