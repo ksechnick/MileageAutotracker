@@ -67,8 +67,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.499"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imageArrow"
-            app:layout_constraintVertical_bias="0.811" />
+            app:layout_constraintTop_toBottomOf="@+id/editTextComments" />
 
         <TextView
             android:id="@+id/textActiveDistance"
@@ -116,12 +115,12 @@
             android:id="@+id/imageArrow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="360dp"
+            android:layout_marginTop="124dp"
             android:contentDescription="GPS arrow"
             android:rotation="45.0"
             android:src="@drawable/ic_arrow"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.499"
+            app:layout_constraintHorizontal_bias="0.168"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -136,6 +135,19 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <EditText
+            android:id="@+id/editTextComments"
+            android:layout_width="350dp"
+            android:layout_height="280dp"
+            android:layout_marginTop="244dp"
+            android:ems="10"
+            android:gravity="start|top"
+            android:hint="Comments"
+            android:inputType="textMultiLine"
+            android:text="@={trip.comments}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

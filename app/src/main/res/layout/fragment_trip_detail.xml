@@ -96,15 +96,18 @@
             app:layout_constraintBottom_toTopOf="@+id/detailTextStartStopTime"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/detailTextBusinessPersonal"
-            app:layout_constraintVertical_bias="0.120000005"
+            app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintVertical_chainStyle="packed"
             app:tripDate="@{tripDetailViewModel.trip}"
             tools:text="01-01-2000" />
+
+        <!--android:inputType="textMultiLine"-->
 
         <TextView
             android:id="@+id/detailTextStartStopTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="20dp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
             android:textSize="24sp"
@@ -114,7 +117,6 @@
             app:tripStartTime="@{tripDetailViewModel.trip}"
             tools:text="TextView" />
 
-        <!--android:inputType="textMultiLine"-->
         <TextView
             android:id="@+id/detailTextLocations"
             android:layout_width="wrap_content"
@@ -139,6 +141,19 @@
             app:layout_constraintEnd_toStartOf="@+id/detailButtonClose"
             app:layout_constraintStart_toStartOf="parent"
             tools:text="Button" />
+
+        <TextView
+            android:id="@+id/editTextComments"
+            android:layout_width="346dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="248dp"
+            android:ems="10"
+            android:gravity="start|top"
+            android:text="@={tripDetailViewModel.trip.comments}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
