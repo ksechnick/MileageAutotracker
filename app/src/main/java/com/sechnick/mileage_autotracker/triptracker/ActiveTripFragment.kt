@@ -52,7 +52,7 @@ class ActiveTripFragment : Fragment() {
                 inflater, R.layout.fragment_active_trip, container, false)
 
         val application = requireNotNull(this.activity).application
-        val arguments = arguments?.let { ActiveTripFragmentArgs.fromBundle(it) }
+        //val arguments = arguments?.let { ActiveTripFragmentArgs.fromBundle(it) }
 
         // Create an instance of the ViewModel Factory.
         val dataSource = MileageDatabase.getInstance(application).mileageDatabaseDao
@@ -68,19 +68,6 @@ class ActiveTripFragment : Fragment() {
       //  binding.distance = TripTrackerViewModel.myService.tripDistance.value
 
         binding.lifecycleOwner = viewLifecycleOwner
-
-        // Add an Observer to the state variable for Navigating when a Quality icon is tapped.
-        tripTrackerViewModel.navigateToTripTracker.observe(viewLifecycleOwner, Observer {
-            if (it == true) { // Observed state is true.
-                this.findNavController().navigate(
-                        ActiveTripFragmentDirections.actionActiveTripFragmentToTripTrackerFragment())
-                // Reset state to make sure we only navigate once, even if the device
-                // has a configuration change.
-                tripTrackerViewModel.onTrackerNavigated()
-            }
-        })
-
-
 
          return binding.root
     }
@@ -102,7 +89,7 @@ class ActiveTripFragment : Fragment() {
 
         TripTrackerViewModel.myService.tripDistance.observe(viewLifecycleOwner, Observer {
   //          val df = DecimalFormat("####.##")
-                textActiveDistance.text = DecimalFormat("####.##").format(it) + " meters"
+                textActiveDistance.text = DecimalFormat("##.##").format(it*.621371/1000) + " mi"
                 textActiveElapsedTime.text = convertDurationToFormatted(tripTrackerViewModel.activeTrip.value.startTimeMilli, System.currentTimeMillis())
         })
 

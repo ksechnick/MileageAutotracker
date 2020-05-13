@@ -79,4 +79,10 @@ interface MileageDatabaseDao {
 
     @Query("SELECT * from recorded_trips WHERE tripId = :key")
     fun getTripWithId(key: Long): LiveData<RecordedTrip>
+
+    @Query("SELECT * from settings WHERE id = :key")
+    fun getSettings(key: Long): Settings
+
+    @Update
+    fun setSettings(settings: Settings)
 }

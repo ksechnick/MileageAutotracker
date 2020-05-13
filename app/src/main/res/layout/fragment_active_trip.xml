@@ -50,18 +50,6 @@
         tools:context=".triptracker.ActiveTripFragment">
 
         <Button
-            android:id="@+id/quality_two_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="back button"
-            android:onClick="@{() -> tripTrackerViewModel.onBackActiveScreen()}"
-            android:text="Back"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <Button
             android:id="@+id/buttonStopTrip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -77,13 +65,11 @@
             android:id="@+id/textActiveDistance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
             android:layout_marginEnd="4dp"
             android:textAlignment="textEnd"
             android:textSize="30sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/quality_two_image"
-
+            app:layout_constraintTop_toBottomOf="@+id/Active_button_continue"
             tools:text="Distance" />
 
         <!--            app:tripDistance="@{distance}"-->
@@ -109,6 +95,7 @@
             app:layout_constraintTop_toBottomOf="@+id/textActiveDistance"
             app:tripDuration="@{trip}"
             tools:text="03:30" />
+
         <TextView
             android:id="@+id/textstaticActiveElapsedTime"
             android:layout_width="wrap_content"
@@ -122,12 +109,12 @@
             android:id="@+id/imageArrow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="124dp"
+            android:layout_marginTop="376dp"
             android:contentDescription="GPS arrow"
             android:rotation="45.0"
             android:src="@drawable/ic_arrow"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.168"
+            app:layout_constraintHorizontal_bias="0.083"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -136,7 +123,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="64dp"
             android:checked="@={trip.businessTrip}"
             android:text="@string/business"
             app:layout_constraintStart_toStartOf="parent"
@@ -144,9 +131,8 @@
 
         <EditText
             android:id="@+id/editTextComments"
-            android:layout_width="350dp"
-            android:layout_height="280dp"
-            android:layout_marginTop="244dp"
+            android:layout_width="335dp"
+            android:layout_height="191dp"
             android:ems="10"
             android:gravity="start|top"
             android:hint="Comments"
@@ -154,18 +140,36 @@
             android:text="@={trip.comments}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/textActiveElapsedTime" />
 
         <TextView
             android:id="@+id/textThisDistance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="60dp"
-            android:layout_marginTop="68dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="160dp"
             android:textSize="30sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Distance" />
+
+        <Button
+            android:id="@+id/Active_button_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="@{() -> tripTrackerViewModel.onActiveStart()}"
+            android:text="Start New Trip"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/Active_button_continue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="@{() -> tripTrackerViewModel.onActiveContinue()}"
+            android:text="Continue Trip"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

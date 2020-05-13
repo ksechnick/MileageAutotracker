@@ -39,41 +39,15 @@
             android:id="@+id/trip_list"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:layout_marginTop="14dp"
             app:layout_constraintBottom_toTopOf="@+id/clear_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/stop_button" />
+            app:layout_constraintTop_toBottomOf="@+id/textTracking" />
 
         <!-- With data binding and LiveData, we can track the buttons' visibility states
              from the ViewModel. The click handler is in the ViewModel as well, and
              you can set it for the Views using this lambda pattern. -->
-
-        <Button
-            android:id="@+id/start_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/margin"
-            android:enabled="@{tripTrackerViewModel.startButtonVisible}"
-            android:onClick="@{() -> tripTrackerViewModel.onStart()}"
-            android:text="@string/start"
-            app:layout_constraintBaseline_toBaselineOf="@id/stop_button"
-            app:layout_constraintEnd_toStartOf="@+id/textTracking"
-            app:layout_constraintHorizontal_chainStyle="spread"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <Button
-            android:id="@+id/stop_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="13dp"
-            android:layout_marginTop="@dimen/margin"
-            android:layout_marginEnd="@dimen/margin"
-            android:enabled="@{tripTrackerViewModel.stopButtonVisible}"
-            android:onClick="@{() -> tripTrackerViewModel.onStopTrackerScreen()}"
-            android:text="@string/stop"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/textTracking"
-            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/clear_button"
@@ -93,11 +67,11 @@
             android:id="@+id/textTracking"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:trackingText="@{tripTrackerViewModel.tracking}"
-            app:layout_constraintBaseline_toBaselineOf="@+id/stop_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            tools:text="isthistracking?"/>
+            app:layout_constraintTop_toTopOf="parent"
+            app:trackingText="@{tripTrackerViewModel.tracking}"
+            tools:text="isthistracking?" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

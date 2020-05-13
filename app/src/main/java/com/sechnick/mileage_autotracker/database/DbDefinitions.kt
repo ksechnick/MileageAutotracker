@@ -18,6 +18,7 @@ package com.sechnick.mileage_autotracker.database
 
 import androidx.room.*
 
+
 /**
  * Represents one trip
  */
@@ -182,6 +183,27 @@ data class MileageReport(
 
     @ColumnInfo(name = "mileage")
     var mileage: Int = 0
+)
+
+@Entity(tableName = "settings")
+data class Settings(
+        @PrimaryKey()
+        var id: Long = 1,
+
+        @ColumnInfo(name = "location_update_rate")
+        var updateRate: Long = 3000L,
+
+        @ColumnInfo(name = "fastest_location_update_rate")
+        var updateFastest: Long = 3000L,
+
+        @ColumnInfo(name = "bluetooth_auto_start")
+        val bluetoothAutoStart: Boolean = false,
+
+        @ColumnInfo(name = "bluetooth_address")
+        val bluetoothAddress: String = "",
+
+        @ColumnInfo(name = "android_auto_auto_start")
+        val androidAutoAutoStart: Boolean = false
 )
 
 /**

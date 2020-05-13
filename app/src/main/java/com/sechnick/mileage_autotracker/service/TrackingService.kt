@@ -16,6 +16,7 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat.stopForeground
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import com.google.android.gms.location.*
@@ -62,7 +63,8 @@ class TrackingService() : Service() {
         }
         fun stopService(context: Context) {
             val stopIntent = Intent(context, TrackingService::class.java)
-            context.stopService(stopIntent)
+            val result = context.stopService(stopIntent)
+            Log.d("stopping service","stopped service?: " + result)
         }
     }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -75,7 +77,7 @@ class TrackingService() : Service() {
                 0, notificationIntent, 0
         )
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Foreground Service Kotlin Example")
+                .setContentTitle("Tracking ")
                 .setContentText(input)
                 .setSmallIcon(R.drawable.ic_directions_car_black_24dp)
                 .setContentIntent(pendingIntent)
@@ -122,18 +124,12 @@ class TrackingService() : Service() {
 
     lateinit var currentLocation : Location
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
-    private val INTERVAL: Long = 2000
+    private val INTERVAL: Long = 5000
     private val FASTEST_INTERVAL: Long = 1000
-    internal var locationRequest: LocationRequest
-
+    internal var locationRequest = LocationRequest()
     //private var activeTrip = MutableLiveData<RecordedTrip?>()
     private var currentPoint = RecordedPoint()
     private lateinit var previousPoint: RecordedPoint
-
-    init {
-        locationRequest = LocationRequest()
-
-    }
 
     protected fun startLocationUpdates() {
 
@@ -288,7 +284,7 @@ class TrackingService() : Service() {
             Log.d("location services", "location updates already stopped")
         }
 
-
+        stopForeground(true)
     }
 
     private suspend fun getCurrentTripFromDatabase(): RecordedTrip? {

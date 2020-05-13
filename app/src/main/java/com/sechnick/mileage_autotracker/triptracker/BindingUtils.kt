@@ -73,16 +73,24 @@ fun TextView.setTripStartTime(item: RecordedTrip?) {
 
 @BindingAdapter("tripDistance")
 fun TextView.setTripDistance(item: RecordedTrip?) {
-    val df = DecimalFormat("####.##")
+    val df = DecimalFormat("##.##")
     item?.let {
-        text = df.format(it.calculatedDistance) + " meters"
+        text = df.format(it.calculatedDistance*.621371/1000) + " mi"
     }
 }
+//@BindingAdapter("tripDistance")
+//fun TextView.setTripDistance(item: Double?) {
+//    val df = DecimalFormat("####.##")
+//    item?.let {
+//        text = df.format(it) + " meters"
+//    }
+//}
+
 @BindingAdapter("tripDistance")
 fun TextView.setTripDistance(item: Double?) {
-    val df = DecimalFormat("####.##")
+    val df = DecimalFormat("##.##")
     item?.let {
-        text = df.format(it) + " meters"
+        text = df.format(it*.621371/1000) + " mi"
     }
 }
 

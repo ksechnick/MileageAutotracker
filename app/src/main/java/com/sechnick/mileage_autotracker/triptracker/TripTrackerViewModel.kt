@@ -377,6 +377,104 @@ class TripTrackerViewModel(
         }
     }
 
+    fun onActiveStart() {
+        uiScope.launch {
+            // Create a new night, which captures the current time,
+            // and insert it into the database.
+            val trip = RecordedTrip()
+
+            startTrip(trip)
+
+            _tracking.value = true
+
+            activeTrip.value = getCurrentTripFromDatabase()
+
+            if (activeTrip.value.tripId != 0L) {
+
+                // _requestLocationPermission.value = true
+
+                Log.d("permissions", "permission request = " + _requestLocationPermission.value.toString())
+
+                Log.d("permissions", "permission result = " + _locationPermissionGranted.value.toString())
+                //if (_locationPermissionGranted.value == true) {
+                if (true) {
+                    // myService.startLocationUpdates()
+                    _locationSnackbarText.value = "victory"
+                } else {
+                    _locationSnackbarText.value = "never set"
+                }
+
+                Log.d("TrackerFragmentCreate", "inside start listener")
+                Log.d("bind service", "myService =$myService")
+                TrackingService.startService(thisApplication, "I'm tracking now")
+                myService.activeTrip = activeTrip.value
+                myService.setTripDistance(activeTrip.value.calculatedDistance)
+
+                //myService.activeTrip.vehicleId = 7
+                //activeTrip.value.startMileage = 5
+//                Log.d("start service compare check", "service trip instance: "+ myService.activeTrip.vehicleId)
+//                Log.d("start service compare check", "service trip value instance: "+ myService.activeTrip.startMileage)
+//                Log.d("start service compare check", "viewmodel trip instance: " + activeTrip.toString())
+//                Log.d("start service compare check", "viewmodel trip value instance: "+ activeTrip.value.toString())
+                _tracking.value = true
+                //myService.startDBLogging(database)
+                //_navigateToActiveTrip.value = activeTrip.value
+            } else {
+                //TODO what if trip not created?
+            }
+
+        }
+    }
+
+    fun onActiveContinue() {
+        uiScope.launch {
+            // Create a new night, which captures the current time,
+            // and insert it into the database.
+            //val trip = RecordedTrip()
+
+            //startTrip(trip)
+
+            _tracking.value = true
+
+            activeTrip.value = getCurrentTripFromDatabase()
+
+            if (activeTrip.value.tripId != 0L) {
+
+                // _requestLocationPermission.value = true
+
+                Log.d("permissions", "permission request = " + _requestLocationPermission.value.toString())
+
+                Log.d("permissions", "permission result = " + _locationPermissionGranted.value.toString())
+                //if (_locationPermissionGranted.value == true) {
+                if (true) {
+                    // myService.startLocationUpdates()
+                    _locationSnackbarText.value = "victory"
+                } else {
+                    _locationSnackbarText.value = "never set"
+                }
+
+                Log.d("TrackerFragmentCreate", "inside start listener")
+                Log.d("bind service", "myService =$myService")
+                TrackingService.startService(thisApplication, "I'm tracking now")
+                myService.activeTrip = activeTrip.value
+                myService.setTripDistance(activeTrip.value.calculatedDistance)
+
+                //myService.activeTrip.vehicleId = 7
+                //activeTrip.value.startMileage = 5
+//                Log.d("start service compare check", "service trip instance: "+ myService.activeTrip.vehicleId)
+//                Log.d("start service compare check", "service trip value instance: "+ myService.activeTrip.startMileage)
+//                Log.d("start service compare check", "viewmodel trip instance: " + activeTrip.toString())
+//                Log.d("start service compare check", "viewmodel trip value instance: "+ activeTrip.value.toString())
+                _tracking.value = true
+                //myService.startDBLogging(database)
+                //_navigateToActiveTrip.value = activeTrip.value
+            } else {
+                //TODO what if trip not created?
+            }
+
+        }
+    }
+
     /**
      * Executes when the STOP button is clicked.
      */
@@ -434,7 +532,7 @@ class TripTrackerViewModel(
             TrackingService.stopService(thisApplication)
             _tracking.value = false
             // Set state to navigate to the ActiveTripFragment.
-            _navigateToTripTracker.value = true
+            //_navigateToTripTracker.value = true
         }
     }
 

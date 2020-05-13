@@ -128,7 +128,7 @@ fun doLocationsOverlap(lat1: Double, long1:Double, horAcc1: Float, lat2: Double,
 @Suppress("UNCHECKED_CAST")
 class SafeMutableLiveData<T>(value: T) : SafeLiveData<T>(value) {
 
-    override fun getValue(): T = super.getValue()
+    //override fun getValue(): T = super.getValue()
     public override fun setValue(value: T) = super.setValue(value)
     public override fun postValue(value: T) = super.postValue(value)
 }
